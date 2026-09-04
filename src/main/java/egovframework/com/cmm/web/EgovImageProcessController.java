@@ -25,7 +25,7 @@ import egovframework.com.cmm.EgovWebUtil;
 import egovframework.com.cmm.SessionVO;
 import egovframework.com.cmm.service.EgovFileMngService;
 import egovframework.com.cmm.service.FileVO;
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 import egovframework.com.cmm.util.EgovUserDetailsHelper;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServlet;
@@ -172,7 +172,7 @@ public class EgovImageProcessController extends HttpServlet {
 			response.getOutputStream().close();
 
 		} finally {
-			EgovResourceCloseHelper.close(bStream);
+			EgovResourceReleaser.close(bStream);
 		}
 	}
 

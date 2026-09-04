@@ -32,7 +32,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.egovframe.rte.fdl.filehandling.EgovFiles;
 
 import egovframework.com.cmm.service.EgovProperties;
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 
 /**
  * @Class Name : EgovFileScrty.java
@@ -92,7 +92,7 @@ public class EgovFileScrty {
 				result = true;
 			}
 		} finally {
-			EgovResourceCloseHelper.close(input, output);
+			EgovResourceReleaser.close(input, output);
 		}
 
 		return result;
@@ -133,7 +133,7 @@ public class EgovFileScrty {
 			result = true;
 		    }
 		} finally {
-			EgovResourceCloseHelper.close(input, output);
+			EgovResourceReleaser.close(input, output);
 		}
 
 		return result;

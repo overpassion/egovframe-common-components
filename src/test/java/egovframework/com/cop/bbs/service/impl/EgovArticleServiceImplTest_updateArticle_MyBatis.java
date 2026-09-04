@@ -8,7 +8,7 @@ import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.session.Configuration;
 import org.junit.jupiter.api.Test;
 
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -132,7 +132,7 @@ public class EgovArticleServiceImplTest_updateArticle_MyBatis {
 		} catch (IOException e) {
 			log.error(e.getMessage());
 		} finally {
-			EgovResourceCloseHelper.close(inputStream);
+			EgovResourceReleaser.close(inputStream);
 		}
 	}
 

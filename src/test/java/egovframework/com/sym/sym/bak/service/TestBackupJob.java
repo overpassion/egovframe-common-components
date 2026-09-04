@@ -28,7 +28,7 @@ import org.quartz.JobExecutionException;
 
 import egovframework.com.cmm.EgovWebUtil;
 import egovframework.com.cmm.service.EgovProperties;
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 import egovframework.com.utl.sim.service.EgovFileTool;
 import lombok.extern.slf4j.Slf4j;
 
@@ -222,7 +222,7 @@ public class TestBackupJob {
 			// result = false;
 			throw new JobExecutionException(msg, e);
 		} finally {
-			EgovResourceCloseHelper.close(aosOutput);
+			EgovResourceReleaser.close(aosOutput);
 
 			if (!result) {
 				// 2017.02.08 이정은 시큐어코딩(ES)-부적절한 예외 처리[CWE-253, CWE-440, CWE-754]

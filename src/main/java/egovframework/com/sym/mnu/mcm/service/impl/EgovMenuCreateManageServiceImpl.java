@@ -207,7 +207,7 @@ public class EgovMenuCreateManageServiceImpl extends EgovAbstractServiceImpl imp
 	 * 
 	 * out.write(vHtmlValue); success = true; } catch (IOException e) {
 	 * LOGGER.error("IOException", e); } finally {
-	 * EgovResourceCloseHelper.close(out); }
+	 * EgovResourceReleaser.close(out); }
 	 * 
 	 * return success; }
 	 */

@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 import egovframework.com.cmm.EgovWebUtil;
 import egovframework.com.cmm.aop.EgovFileBasePathSecurityValidator;
 import egovframework.com.cmm.service.EgovProperties;
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 import egovframework.com.utl.fcc.service.EgovStringUtil;
 
 /**
@@ -418,7 +418,7 @@ public class EgovFileTool {
 				}
 			}
 		} finally {
-			EgovResourceCloseHelper.close(br);
+			EgovResourceReleaser.close(br);
 		}
 
 		return parResult;

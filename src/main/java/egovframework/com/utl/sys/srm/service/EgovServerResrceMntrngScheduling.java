@@ -22,7 +22,7 @@ import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.stereotype.Service;
 
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 import egovframework.com.cop.sms.service.EgovSmsInfoService;
 import egovframework.com.cop.sms.service.Sms;
 import egovframework.com.utl.fcc.service.EgovDateUtil;
@@ -173,7 +173,7 @@ public class EgovServerResrceMntrngScheduling extends EgovAbstractServiceImpl {
 			egovServerResrceMntrngService.insertServerResrceMntrng(serverResrceMntrng);
 
 		} finally {
-			EgovResourceCloseHelper.close(connector);
+			EgovResourceReleaser.close(connector);
 		}
 	}
 

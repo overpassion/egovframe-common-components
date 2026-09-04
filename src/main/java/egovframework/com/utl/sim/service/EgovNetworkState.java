@@ -30,7 +30,7 @@ import egovframework.com.cmm.EgovWebUtil;
 import egovframework.com.cmm.service.EgovProperties;
 import egovframework.com.cmm.service.FileSystemUtils;
 import egovframework.com.cmm.service.Globals;
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 
 /**
  * EgovNetworkState 클래스를 정의한다.
@@ -163,7 +163,7 @@ public class EgovNetworkState {
 		} catch (IOException e) {
 			throw new RuntimeException("IO Exception", e);
 		} finally {
-			EgovResourceCloseHelper.close(input);
+			EgovResourceReleaser.close(input);
 		}
 
 		return processes;
@@ -270,7 +270,7 @@ public class EgovNetworkState {
 				}
 			}
 		} finally {
-			EgovResourceCloseHelper.close(b_out);
+			EgovResourceReleaser.close(b_out);
 
 			if (p != null) {
 				p.destroy();

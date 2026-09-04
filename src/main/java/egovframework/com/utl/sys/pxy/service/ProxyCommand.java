@@ -8,7 +8,7 @@ import java.net.Socket;
 import javax.net.ssl.SSLSocketFactory;
 
 import egovframework.com.cmm.EgovWebUtil;
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 
 /**
  * 프록시서비스 처리 클래스
@@ -61,8 +61,8 @@ public class ProxyCommand {
 	}
 
 	private void CloseSocket() {
-		EgovResourceCloseHelper.close(disReader, dosWriter);
-		EgovResourceCloseHelper.closeSockets(clientSocket);
+		EgovResourceReleaser.close(disReader, dosWriter);
+		EgovResourceReleaser.closeSockets(clientSocket);
 	}
 
 	/**

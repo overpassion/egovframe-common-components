@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import egovframework.com.cmm.EgovWebUtil;
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 import egovframework.com.utl.sys.pxy.service.impl.ProxySvcDAO;
 
 /**
@@ -145,8 +145,8 @@ public class ProxyServer extends Thread {
 		} catch (IOException e) {
 			LOGGER.debug("Server IO exception", e);
 		} finally {
-			EgovResourceCloseHelper.closeSockets(server);
-			EgovResourceCloseHelper.closeSocketObjects(client, serverSocket);
+			EgovResourceReleaser.closeSockets(server);
+			EgovResourceReleaser.closeSocketObjects(client, serverSocket);
 		}
 	}
 

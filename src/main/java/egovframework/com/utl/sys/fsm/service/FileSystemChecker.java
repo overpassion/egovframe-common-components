@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import egovframework.com.cmm.service.FileSystemUtils;
 import egovframework.com.cmm.service.Globals;
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 
 /**
  * 개요
@@ -118,7 +118,7 @@ public class FileSystemChecker {
 			fileWriter.write("select volume " + windowsPath + "\n");
 			fileWriter.write("detail partition");
 		} finally {
-			EgovResourceCloseHelper.close(fileWriter);
+			EgovResourceReleaser.close(fileWriter);
 		}
 
 		// build and run the 'diskpart' command
@@ -280,7 +280,7 @@ public class FileSystemChecker {
 		} catch (InterruptedException ex) {
 			throw new IOException("Command line threw an InterruptedException '" + ex.getMessage() + "' for command " + Arrays.asList(cmdAttribs));
 		} finally {
-			EgovResourceCloseHelper.close(b_out);
+			EgovResourceReleaser.close(b_out);
 
 			if (p != null) {
 				p.destroy();

@@ -41,7 +41,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
 import egovframework.com.cmm.service.EgovProperties;
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 import noNamespace.SndngMailDocument;
 
 public class EgovXMLDoc {
@@ -101,7 +101,7 @@ public class EgovXMLDoc {
 			result = true;
 
 		} finally {
-			EgovResourceCloseHelper.close(fos);
+			EgovResourceReleaser.close(fos);
 		}
 
 		return result;
@@ -134,7 +134,7 @@ public class EgovXMLDoc {
 				xmlDoc = builder.parse(fis);
 			}
 		} finally {
-			EgovResourceCloseHelper.close(fis);
+			EgovResourceReleaser.close(fis);
 		}
 
 		return xmlDoc;

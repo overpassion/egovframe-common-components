@@ -9,7 +9,7 @@ import org.apache.ibatis.mapping.ResultMap;
 import org.apache.ibatis.session.Configuration;
 import org.junit.jupiter.api.Test;
 
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -60,7 +60,7 @@ public class EgovArticleServiceImplTest_selectNoticeArticleList_MyBatis {
 			log.debug(sb2.toString());
 		} catch (IOException e) {
 			log.error(e.getMessage());
-			EgovResourceCloseHelper.close(inputStream);
+			EgovResourceReleaser.close(inputStream);
 		}
 	}
 

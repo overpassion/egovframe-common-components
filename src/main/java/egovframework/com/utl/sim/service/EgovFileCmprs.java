@@ -29,7 +29,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import egovframework.com.cmm.EgovWebUtil;
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 
 public class EgovFileCmprs {
 
@@ -112,7 +112,7 @@ public class EgovFileCmprs {
 							foutput.flush();
 						} finally {
 							// 각 entry의 FileOutputStream을 닫음
-							EgovResourceCloseHelper.close(foutput);
+							EgovResourceReleaser.close(foutput);
 							foutput = null;
 						}
 					}
@@ -122,7 +122,7 @@ public class EgovFileCmprs {
 				result = true;
 
 			} finally {
-				EgovResourceCloseHelper.close(finput, zinput, foutput);
+				EgovResourceReleaser.close(finput, zinput, foutput);
 			}
 		}
 		return result;

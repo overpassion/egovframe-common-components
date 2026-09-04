@@ -8,7 +8,7 @@ import java.net.Socket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 /**
  * 프록시 스레드 클래스는 클라이언트와 서버 간의 통신을 중계합니다.
  */
@@ -115,7 +115,7 @@ public class ProxyThread implements Runnable {
 			LOGGER.debug("Server IO Error", e);
 		} finally {
 			// 자원을 안전하게 닫습니다.
-			EgovResourceCloseHelper.close(streamToServer);
+			EgovResourceReleaser.close(streamToServer);
 		}
 	}
 }

@@ -40,7 +40,7 @@ import com.artofsolving.jodconverter.openoffice.converter.OpenOfficeDocumentConv
 
 import egovframework.com.cmm.service.EgovProperties;
 import egovframework.com.cmm.util.EgovBasicLogger;
-import egovframework.com.cmm.util.EgovResourceCloseHelper;
+import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 import egovframework.com.utl.fcc.service.EgovStringUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -173,7 +173,7 @@ public class EgovPdfCnvr {
 			}
 
 		} finally {
-			EgovResourceCloseHelper.close(bos, stream);
+			EgovResourceReleaser.close(bos, stream);
 		}
 	}
 
