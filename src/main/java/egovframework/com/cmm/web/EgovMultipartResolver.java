@@ -15,6 +15,7 @@ package egovframework.com.cmm.web;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -26,8 +27,11 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 
+import org.egovframe.rte.fdl.filehandling.upload.EgovUploadPolicy;
+import org.egovframe.rte.fdl.filehandling.upload.EgovUploadRejectedException;
+import org.egovframe.rte.ptl.mvc.upload.EgovMultipartFiles;
+
 import egovframework.com.cmm.service.EgovProperties;
-import egovframework.com.utl.fcc.service.EgovFileUploadUtil;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
@@ -89,113 +93,50 @@ public class EgovMultipartResolver extends StandardServletMultipartResolver {
 	 * @throws SecurityException 보안 검증 실패 시
 	 */
 	private void validateUploadedFiles(MultipartHttpServletRequest multipartRequest) throws SecurityException {
-		Map<String, List<MultipartFile>> fileMap = multipartRequest.getMultiFileMap();
-		String whiteListFileUploadExtensions = EgovProperties.getProperty("Globals.fileUpload.Extensions");
-		long maxFileSize = getMaxFileSize();
+		EgovUploadPolicy policy = buildPolicy();
 
-		// 파일 개수 제한 검증 추가
-		validateFileCount(multipartRequest);
-
-		LOGGER.debug("File upload validation - Whitelist extensions: {}", whiteListFileUploadExtensions);
-
-		for (Map.Entry<String, List<MultipartFile>> entry : fileMap.entrySet()) {
-			String fieldName = entry.getKey();
-			List<MultipartFile> files = entry.getValue();
-
-			for (MultipartFile file : files) {
-				if (file != null && !file.isEmpty()) {
-					validateFile(file, whiteListFileUploadExtensions, maxFileSize);
-					LOGGER.debug("File validation passed for field [{}]: {} ({} bytes)",
-						fieldName, file.getOriginalFilename(), file.getSize());
-				}
-			}
+		List<MultipartFile> allFiles = new ArrayList<>();
+		for (List<MultipartFile> files : multipartRequest.getMultiFileMap().values()) {
+			allFiles.addAll(files);
 		}
+
+		try {
+			EgovMultipartFiles.validateAll(policy, allFiles);
+		} catch (EgovUploadRejectedException e) {
+			// 종전 계약 유지 — 이 리졸버는 SecurityException 으로 거부를 알린다.
+			LOGGER.warn("File upload rejected: {}", e.getReason());
+			throw new SecurityException(e.getMessage(), e);
+		}
+
+		LOGGER.debug("File upload validation passed: {} file(s)", allFiles.size());
 	}
 
 	/**
-	 * 개별 파일의 보안 검증을 수행한다.
+	 * 설정에서 업로드 정책을 만든다.
 	 *
-	 * @param file 검증할 파일
-	 * @param whiteListFileUploadExtensions 허용된 파일 확장자 목록
-	 * @param maxFileSize 허용된 최대 파일 크기 (바이트)
-	 * @throws SecurityException 보안 검증 실패 시
-	 */
-	private void validateFile(MultipartFile file, String whiteListFileUploadExtensions, long maxFileSize) throws SecurityException {
-		String fileName = file.getOriginalFilename();
-
-		if (fileName == null || fileName.trim().isEmpty()) {
-			LOGGER.warn("File name is null or empty");
-			throw new SecurityException("File name is null or empty");
-		}
-
-		String fileExtension = EgovFileUploadUtil.getFileExtension(fileName);
-		LOGGER.debug("Validating file: {} with extension: {}", fileName, fileExtension);
-
-		// 확장자가 없는 경우 처리 불가
-		if (fileExtension == null || fileExtension.trim().isEmpty()) {
-			LOGGER.warn("File extension not found for file: {}", fileName);
-			throw new SecurityException("[No file extension] File extension not allowed.");
-		}
-
-		// 화이트리스트 검증
-		if (whiteListFileUploadExtensions != null && !whiteListFileUploadExtensions.trim().isEmpty()) {
-			String[] allowedExtensions = whiteListFileUploadExtensions.split(",");
-			boolean isAllowed = false;
-
-			for (String allowedExt : allowedExtensions) {
-				String trimmedExt = allowedExt.trim().toLowerCase();
-				// 점(.)으로 시작하는 경우 제거
-				if (trimmedExt.startsWith(".")) {
-					trimmedExt = trimmedExt.substring(1);
-				}
-				if (trimmedExt.equals(fileExtension.toLowerCase())) {
-					isAllowed = true;
-					break;
-				}
-			}
-
-			if (!isAllowed) {
-				LOGGER.warn("File extension [{}] not allowed for file: {}", fileExtension, fileName);
-				throw new SecurityException("[" + fileExtension + "] File extension not allowed.");
-			}
-		} else {
-			LOGGER.debug("No file extension whitelist configured, allowing all extensions");
-		}
-
-		// 파일 크기 검증 (기본값: 10MB)
-		if (file.getSize() > maxFileSize) {
-			LOGGER.warn("File size [{}] exceeds maximum allowed size [{}] for file: {}",
-				file.getSize(), maxFileSize, fileName);
-			throw new SecurityException("File size exceeds maximum allowed size.");
-		}
-	}
-
-	/**
-	 * 파일 개수 제한을 검증한다.
+	 * <p>설정 키와 기본값은 종전과 같다. 달라진 것은 <b>화이트리스트를 지정하지 않으면
+	 * 정책을 만들 수 없다</b>는 점이다 — 종전에는 미설정 시 모든 확장자를 통과시켰다.</p>
 	 *
-	 * @param multipartRequest MultipartHttpServletRequest
-	 * @throws SecurityException 파일 개수 제한 초과 시
+	 * @return 업로드 정책
+	 * @throws SecurityException 화이트리스트가 설정되지 않았거나 설정값이 잘못된 경우
 	 */
-	private void validateFileCount(MultipartHttpServletRequest multipartRequest) throws SecurityException {
-		Map<String, List<MultipartFile>> fileMap = multipartRequest.getMultiFileMap();
-		int totalFileCount = 0;
-
-		// 실제 파일이 업로드된 개수만 계산 (빈 파일 제외)
-		for (List<MultipartFile> files : fileMap.values()) {
-			for (MultipartFile file : files) {
-				if (file != null && !file.isEmpty()) {
-					totalFileCount++;
-				}
-			}
+	private EgovUploadPolicy buildPolicy() throws SecurityException {
+		String extensions = EgovProperties.getProperty("Globals.fileUpload.Extensions");
+		if (!StringUtils.hasText(extensions)) {
+			throw new SecurityException(
+					"Globals.fileUpload.Extensions is not configured. "
+					+ "Uploads are rejected until an extension whitelist is set.");
 		}
 
-		int maxFileCount = getMaxFileCount();
-		if (totalFileCount > maxFileCount) {
-			LOGGER.warn("File count [{}] exceeds maximum allowed count [{}]", totalFileCount, maxFileCount);
-			throw new SecurityException("File count exceeds maximum allowed count: " + totalFileCount + " > " + maxFileCount);
+		try {
+			return EgovUploadPolicy.builder()
+					.allowExtensions(extensions.split(","))
+					.maxFileSize(getMaxFileSize())
+					.maxFileCount(getMaxFileCount())
+					.build();
+		} catch (IllegalArgumentException | IllegalStateException e) {
+			throw new SecurityException("Invalid file upload policy configuration: " + e.getMessage(), e);
 		}
-
-		LOGGER.debug("File count validation passed: {} files (max: {})", totalFileCount, maxFileCount);
 	}
 
 	/**
@@ -209,7 +150,10 @@ public class EgovMultipartResolver extends StandardServletMultipartResolver {
 			try {
 				return Integer.parseInt(maxFileCountStr);
 			} catch (NumberFormatException e) {
-				LOGGER.warn("Invalid maxFileCount configuration: {}, using default", maxFileCountStr);
+				// 종전에는 warn 로그 후 기본값으로 넘어갔다. 설정 오타가 조용히 무시되면
+				// 운영자가 건 제한이 걸리지 않은 채로 뜨므로 즉시 실패한다.
+				throw new IllegalStateException(
+						"Invalid Globals.fileUpload.maxFileCount: " + maxFileCountStr, e);
 			}
 		}
 		// 기본값: 10개 (Tomcat 9.0.106+ 기본값과 동일)
@@ -227,7 +171,9 @@ public class EgovMultipartResolver extends StandardServletMultipartResolver {
 			try {
 				return Long.parseLong(maxFileSizeStr);
 			} catch (NumberFormatException e) {
-				LOGGER.warn("Invalid maxFileSize configuration: {}, using default", maxFileSizeStr);
+				// 종전에는 warn 로그 후 기본값으로 넘어갔다(위 maxFileCount 와 같은 이유로 변경).
+				throw new IllegalStateException(
+						"Invalid Globals.fileUpload.maxSize: " + maxFileSizeStr, e);
 			}
 		}
 		// 기본값: 100MB (수정됨)
