@@ -29,6 +29,7 @@ import java.util.StringTokenizer;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.egovframe.rte.fdl.filehandling.EgovFiles;
 import egovframework.com.cmm.EgovWebUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -517,13 +518,11 @@ public class FileSystemUtils {
 			}
 
 			// 실행 경로를 신뢰 가능한 baseDir 기준으로 재구성 (사용자 입력 경로를 직접 사용하지 않음)
-			java.nio.file.Path baseDir   = java.nio.file.Paths.get(batchFolder).toAbsolutePath().normalize();
-			java.nio.file.Path targetPath = baseDir.resolve(fileName).normalize();
-
-			// 경로 이탈 방지 (화이트리스트 설정 오류 등에 대한 최후 방어선)
-			if (!targetPath.startsWith(baseDir)) {
-				throw new SecurityException("Path traversal blocked.");
-			}
+			// 경로 이탈 방지 (화이트리스트 설정 오류 등에 대한 최후 방어선)는 실행환경 EgovFiles 에
+			// 맡긴다 — 종전 검사에 더해 널 바이트와 절대 경로도 함께 걸러낸다.
+			java.nio.file.Path targetPath = EgovFiles
+				.tryResolveSecurely(java.nio.file.Paths.get(batchFolder), fileName)
+				.orElseThrow(() -> new SecurityException("Path traversal blocked."));
 
 			// 파일 존재 및 일반 파일 여부 확인
 			if (!java.nio.file.Files.exists(targetPath) || !java.nio.file.Files.isRegularFile(targetPath)) {

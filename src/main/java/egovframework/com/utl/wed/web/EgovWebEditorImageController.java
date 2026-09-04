@@ -4,7 +4,6 @@ import egovframework.com.cmm.util.EgovUserDetailsHelper;
 import egovframework.com.cmm.LoginVO;
 
 import java.io.FileNotFoundException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Locale;
@@ -209,13 +208,11 @@ public class EgovWebEditorImageController {
 			throw new FileNotFoundException();
 		}
 
-		if ((subPath.indexOf("..") >= 0) || (physical.indexOf("..") >= 0) ) {
-			throw new Exception("Security Exception - illegal url called.");
-		}
-
-		Path uploadRoot = Paths.get(uploadDir).toAbsolutePath().normalize();
-		Path resolvedPath = uploadRoot.resolve(subPath).resolve(physical).normalize();
-		if (!resolvedPath.startsWith(uploadRoot)) {
+		// 경로 조작 방어를 실행환경 EgovFiles 로 통일한다. 널 바이트·절대 경로·정규화 후 기준
+		// 이탈을 한 번에 막는다 — 종전의 ".." 문자열 검사는 널 바이트와 절대 경로를 걸러내지 못했다.
+		// 거부는 모두 FileNotFoundException 으로 낸다. 종전에는 ".." 만 별도 메시지로 알려
+		// 탐지 시도에 정보를 흘렸다.
+		if (EgovFiles.tryResolveSecurely(Paths.get(uploadDir), subPath + "/" + physical).isEmpty()) {
 			throw new FileNotFoundException();
 		}
 
