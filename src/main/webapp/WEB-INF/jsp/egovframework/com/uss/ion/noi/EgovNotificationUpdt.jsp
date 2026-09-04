@@ -5,7 +5,6 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
-<%@ taglib prefix="double-submit" uri="http://www.egovframe.go.kr/tags/double-submit/jsp" %>
 <%
 /**
  * @Class Name : EgovNotificationUpdt.jsp
@@ -87,7 +86,7 @@
 
 <form:form id="notificationVO" modelAttribute="notificationVO" name="notificationVO" method="post" action="${pageContext.request.contextPath}/uss/ion/noi/updateNotification.do">
 
-<double-submit:preventer tokenKey="EgovNotification"/>
+<ui:submitToken tokenKey="EgovNotification"/>
 
 <input name="pageIndex" type="hidden" value="<c:out value='${notificationVO.pageIndex}'/>">
 <form:hidden path="ntfcNo" />

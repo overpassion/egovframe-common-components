@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.egovframe.rte.fdl.property.EgovPropertyService;
+import org.egovframe.rte.ptl.mvc.context.EgovRequestContext;
 import org.egovframe.rte.ptl.mvc.tags.ui.pagination.PaginationInfo;
+import org.egovframe.rte.ptl.mvc.token.EgovSubmitTokens;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
@@ -16,7 +18,6 @@ import org.springframework.web.bind.support.SessionStatus;
 import egovframework.com.cmm.EgovMessageSource;
 import egovframework.com.cmm.LoginVO;
 import egovframework.com.cmm.annotation.IncludedInfo;
-import egovframework.com.cmm.util.EgovDoubleSubmitHelper;
 import egovframework.com.cmm.util.EgovUserDetailsHelper;
 import egovframework.com.uss.ion.noi.service.EgovNotificationService;
 import egovframework.com.uss.ion.noi.service.NotificationVO;
@@ -118,7 +119,7 @@ public class EgovNotificationController {
         if (isAuthenticated) {
             notificationVO.setFrstRegisterId(user == null ? "" : EgovStringUtil.isNullToString(user.getUniqId()));
 
-            if (EgovDoubleSubmitHelper.checkAndSaveToken()) {
+            if (EgovSubmitTokens.validate(EgovRequestContext.getRequiredRequest())) {
                 notificationService.insertNotificationInf(notificationVO);
             }
         }
@@ -187,7 +188,7 @@ public class EgovNotificationController {
         if (isAuthenticated) {
             notificationVO.setLastUpdusrId(user == null ? "" : EgovStringUtil.isNullToString(user.getUniqId()));
 
-            if (EgovDoubleSubmitHelper.checkAndSaveToken("EgovNotification")) {
+            if (EgovSubmitTokens.validate(EgovRequestContext.getRequiredRequest(), "EgovNotification")) {
                 notificationService.updateNotifictionInf(notificationVO);
             }
         }

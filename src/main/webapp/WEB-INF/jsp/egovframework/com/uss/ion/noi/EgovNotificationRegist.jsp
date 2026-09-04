@@ -4,7 +4,6 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
-<%@ taglib prefix="double-submit" uri="http://www.egovframe.go.kr/tags/double-submit/jsp" %>
 <%
 /**
  * @Class Name : EgovNotificationRegist.jsp
@@ -98,7 +97,7 @@
 
 <form:form id="notificationVO" modelAttribute="notificationVO" name="notificationVO" method="post" action="${pageContext.request.contextPath}/uss/ion/noi/insertNotification.do">
 
-	<double-submit:preventer/>
+	<ui:submitToken/>
 
 	<input name="pageIndex" type="hidden" value="<c:out value='${notificationVO.pageIndex}'/>">
 	<input name="ntfcTime" id="ntfcTime" type="hidden" value="<c:out value='${notificationVO.ntfcTime}'/>">

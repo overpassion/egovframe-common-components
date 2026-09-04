@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.aspectj.lang.JoinPoint;
+import org.egovframe.rte.ptl.mvc.context.EgovRequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import egovframework.com.cmm.LoginVO;
-import egovframework.com.cmm.util.EgovHttpRequestHelper;
 import egovframework.com.cmm.util.EgovUserDetailsHelper;
 import jakarta.annotation.Resource;
 
@@ -68,7 +68,7 @@ public class EgovPrivacyLogAspect {
 
 		String serviceName = className + "." + methodName;
 
-		if (!EgovHttpRequestHelper.isInHttpRequest()) {
+		if (!EgovRequestContext.isPresent()) {
 			LOGGER.info("{} service called, but it isn't in HTTP request...", serviceName);
 			return;
 		}
@@ -180,7 +180,7 @@ public class EgovPrivacyLogAspect {
 		if (loginVO != null) {
 			log.setRequesterId(loginVO.getUniqId());
 		}
-		log.setRequesterIp(EgovHttpRequestHelper.getRequestIp());
+		log.setRequesterIp(EgovRequestContext.getRemoteAddress().orElse(null));
 
 		return log;
 	}
