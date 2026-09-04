@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import egovframework.com.cmm.EgovWebUtil;
+import egovframework.com.utl.fcc.service.EgovStringUtil;
 import org.egovframe.rte.fdl.logging.util.EgovResourceReleaser;
 import egovframework.com.utl.sys.pxy.service.impl.ProxySvcDAO;
 
@@ -113,7 +114,7 @@ public class ProxyServer extends Thread {
 					InputStream streamFromClient = client.getInputStream();
 					OutputStream streamToClient = client.getOutputStream();
 
-					String svcIp = EgovWebUtil.filePathBlackList(getSvcIp());
+					String svcIp = EgovStringUtil.isNullToString(getSvcIp());
 					server = SSLSocketFactory.getDefault().createSocket(svcIp, remotePort);//2022.01. Unencrypted Socket 처리
 
 					InputStream streamFromServer = server.getInputStream();

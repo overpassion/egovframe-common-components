@@ -13,7 +13,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import egovframework.com.cmm.EgovWebUtil;
 import jakarta.annotation.Resource;
 
 /**
@@ -85,9 +84,6 @@ public class EgovComUtlController {
 		link = link.replace(";", "");
 		link = link.replace("%", "");
 		link = link.replace(".", "");
-
-		// 안전한 경로 문자열로 조치
-		link = EgovWebUtil.filePathBlackList(link);
 
 		return link;
 	}

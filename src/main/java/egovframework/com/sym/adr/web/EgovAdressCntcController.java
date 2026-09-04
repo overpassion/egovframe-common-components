@@ -58,7 +58,7 @@ public class EgovAdressCntcController {
 		String apiUrl = "http://www.juso.go.kr/addrlink/addrLinkApi.do?currentPage=" + currentPage + "&countPerPage="
 			+ countPerPage + "&keyword=" + URLEncoder.encode(keyword, "UTF-8") + "&confmKey="
 			+ URLEncoder.encode(confmKey, "UTF-8");
-		URL url = new URL(EgovWebUtil.filePathBlackList(apiUrl));
+		URL url = new URL(apiUrl);
 		try (BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream(), "UTF-8"));) {//2022.01 Resources should be closed
 			StringBuilder sb = new StringBuilder();
 			String tempStr = null;
@@ -100,7 +100,7 @@ public class EgovAdressCntcController {
 		String apiUrl = "http://www.juso.go.kr/addrlink/addrLinkApiTest.do?currentPage=" + currentPage
 			+ "&countPerPage=" + countPerPage + "&keyword=" + URLEncoder.encode(keyword, "UTF-8") + "&confmKey="
 			+ URLEncoder.encode(confmKey, "UTF-8");
-		URL url = new URL(EgovWebUtil.filePathBlackList(apiUrl));
+		URL url = new URL(apiUrl);
 		try(BufferedReader br = new BufferedReader(new InputStreamReader(url.openStream(), "UTF-8"));){//2022.01 Resources should be closed
 			StringBuilder sb = new StringBuilder();
 			String tempStr = null;

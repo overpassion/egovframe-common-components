@@ -101,7 +101,7 @@ public class CkImageSaver {
 			StringUtils.removeEnd(imageBaseDir, "\\");
 		}
 
-		this.imageDomain = EgovWebUtil.filePathBlackList(imageDomain);
+		this.imageDomain = EgovStringUtil.isNullToString(imageDomain);
 		if ((EgovStringUtil.isNullToString(this.imageDomain)).endsWith("/")) {
 			StringUtils.removeEnd(this.imageDomain, "/");
 		}

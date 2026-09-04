@@ -386,7 +386,7 @@ public class EgovPopupManageController {
 		model.addAttribute("stopVewAt", stopVewAt);
 		model.addAttribute("popupId", popupId);
 
-		String fileUrl2 = EgovWebUtil.filePathBlackList(fileUrl);
+		String fileUrl2 = fileUrl;
 
 		if (fileUrl2 == null) {
 			fileUrl2 = "";

@@ -16,7 +16,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import egovframework.com.cmm.ComDefaultCodeVO;
 import egovframework.com.cmm.EgovMessageSource;
-import egovframework.com.cmm.EgovWebUtil;
 import egovframework.com.cmm.LoginVO;
 import egovframework.com.cmm.annotation.IncludedInfo;
 import egovframework.com.cmm.annotation.RequireAdmin;
@@ -174,8 +173,8 @@ public class EgovProxySvcController {
 			proxySvc.setLastUpdusrId(user == null ? "" : EgovStringUtil.isNullToString(user.getId()));
 			proxySvc.setProxyId(egovProxySvcIdGnrService.getNextStringId());
 
-			proxySvc.setProxyIp(EgovWebUtil.filePathBlackList(proxySvc.getProxyIp()));
-			proxySvc.setSvcIp(EgovWebUtil.filePathBlackList(proxySvc.getSvcIp()));
+			proxySvc.setProxyIp(EgovStringUtil.isNullToString(proxySvc.getProxyIp()));
+			proxySvc.setSvcIp(EgovStringUtil.isNullToString(proxySvc.getSvcIp()));
 
 			egovProxySvcService.insertProxySvc(proxySvc);
 			redirectAttributes.addFlashAttribute("message", egovMessageSource.getMessage("success.common.insert"));
@@ -220,8 +219,8 @@ public class EgovProxySvcController {
 			}
 
 			proxySvc.setLastUpdusrId(user == null ? "" : EgovStringUtil.isNullToString(user.getId()));
-			proxySvc.setProxyIp(EgovWebUtil.filePathBlackList(proxySvc.getProxyIp()));
-			proxySvc.setSvcIp(EgovWebUtil.filePathBlackList(proxySvc.getSvcIp()));
+			proxySvc.setProxyIp(EgovStringUtil.isNullToString(proxySvc.getProxyIp()));
+			proxySvc.setSvcIp(EgovStringUtil.isNullToString(proxySvc.getSvcIp()));
 
 			egovProxySvcService.updateProxySvc(proxySvc);
 			status.setComplete();

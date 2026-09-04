@@ -21,7 +21,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import egovframework.com.cmm.ComDefaultCodeVO;
 import egovframework.com.cmm.ComDefaultVO;
 import egovframework.com.cmm.EgovMessageSource;
-import egovframework.com.cmm.EgovWebUtil;
 import egovframework.com.cmm.LoginVO;
 import egovframework.com.cmm.annotation.IncludedInfo;
 import egovframework.com.cmm.service.CmmnDetailCode;
@@ -198,9 +197,6 @@ public class EgovQustnrRespondInfoController {
 		// 이전 주소
 		// 2026.07.13 KISA 보안취약점 조치 - Referer 오픈 리다이렉트 방지(같은 오리진/상대경로만 허용)
 		model.addAttribute("returnUrl", safeReturnUrl(request));
-
-		// 안전한 경로 문자열로 조치
-		sTemplateUrl = EgovWebUtil.filePathBlackList(sTemplateUrl);
 
 		// 화이트 리스트 체크
 		List<EgovMap> popupWhiteList = egovQustnrRespondInfoService.selectQustnrTmplatWhiteList();

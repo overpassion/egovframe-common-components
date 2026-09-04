@@ -7,8 +7,6 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 
-import egovframework.com.cmm.EgovWebUtil;
-
 /**
  * @Class Name : HttpMntrngChecker.java
  * @Description : HTTP서비스모니터링을 위한 Check 클래스
@@ -87,7 +85,6 @@ public class HttpMntrngChecker {
 		}
 
 		// 1. URL 파싱 (잘못된 URL 형식 검증)
-		siteUrl = EgovWebUtil.filePathBlackList(siteUrl);
 		URL parsedUrl = new URL(siteUrl);
 
 		// 2. 프로토콜 검증 (http/https만 허용)

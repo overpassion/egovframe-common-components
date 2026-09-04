@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.ModelAndView;
 
 import egovframework.com.cmm.ComDefaultCodeVO;
-import egovframework.com.cmm.EgovWebUtil;
 import egovframework.com.cmm.LoginVO;
 import egovframework.com.cmm.annotation.IncludedInfo;
 import egovframework.com.cmm.annotation.RequireAdmin;
@@ -623,9 +622,6 @@ public class EgovEmplyrManageController {
 
 		link = link.replace(";", "");
 		link = link.replace("%", "");
-
-		// 안전한 경로 문자열로 조치
-		link = EgovWebUtil.filePathBlackList(link);
 
 		// 실명인증기능 미탑재로 바로 회원가입 페이지로 이동.
 		return "forward:" + link;
