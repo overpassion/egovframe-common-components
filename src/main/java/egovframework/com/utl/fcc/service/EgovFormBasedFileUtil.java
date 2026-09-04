@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,12 +63,17 @@ public class EgovFormBasedFileUtil {
 	}
 
 	/**
-	 * 물리적 파일명 생성.
+	 * 물리적 파일명 생성 — 하이픈 없는 32자리 대문자 16진 문자열.
 	 *
-	 * @return
+	 * <p>종전에는 {@link EgovFormBasedUUID#randomUUID()} 를 썼다. 그 구현은 JDK 의
+	 * {@link UUID#randomUUID()} 와 알고리즘이 같다 — {@code SecureRandom} 16바이트에
+	 * 버전 4 · IETF variant 비트를 세우는 동일한 절차다. 결과 형식도 같으므로
+	 * JDK 표준으로 바꾼다.</p>
+	 *
+	 * @return 32자리 대문자 16진 문자열
 	 */
 	public static String getPhysicalFileName() {
-		return EgovFormBasedUUID.randomUUID().toString().replaceAll("-", "").toUpperCase();
+		return UUID.randomUUID().toString().replace("-", "").toUpperCase(Locale.ROOT);
 	}
 
 	/**

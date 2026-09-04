@@ -128,7 +128,15 @@ public class EgovFormBasedUUID implements Serializable {
 	 * random number generator.
 	 *
 	 * @return a randomly generated <tt>UUID</tt>.
+	 *
+	 * @deprecated JDK 의 {@link java.util.UUID#randomUUID()} 와 알고리즘이 같다 —
+	 *             {@code SecureRandom} 16바이트에 버전 4 · IETF variant 비트를 세우는
+	 *             동일한 절차이고 문자열 형식도 같다. 표준 API 를 쓴다.
+	 *             호출부는 없다(2026.09 기준).
+	 *             <p>같은 클래스의 {@link #nameUUIDFromBytes(byte[])} 는 <b>대체 대상이 아니다</b> —
+	 *             무작위 salt 를 섞어 호출마다 다른 값을 돌려주므로 JDK 의 이름 기반 UUID 와 동작이 다르다.</p>
 	 */
+	@Deprecated
 	public static EgovFormBasedUUID randomUUID() {
 		SecureRandom ng = makeSecureRandom();
 

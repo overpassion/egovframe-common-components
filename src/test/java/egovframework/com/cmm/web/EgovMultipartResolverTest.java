@@ -1,5 +1,6 @@
 package egovframework.com.cmm.web;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -60,6 +61,19 @@ class EgovMultipartResolverTest {
 		return resolver.resolveMultipart(request);
 	}
 
+	/** 내용이 0바이트인 파트 — 사용자가 파일 입력칸을 비워 둔 채 보낸 경우다. */
+	private MultipartHttpServletRequest resolveWithEmptyPart(String... filledFileNames) {
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", "/upload.do");
+		request.setContentType("multipart/form-data; boundary=----test");
+		request.addPart(new MockPart("emptyInput", "", new byte[0]));
+		int index = 0;
+		for (String fileName : filledFileNames) {
+			request.addPart(new MockPart("file" + index++, fileName,
+					"CONTENT".getBytes(StandardCharsets.UTF_8)));
+		}
+		return resolver.resolveMultipart(request);
+	}
+
 	private String rejectionOf(String... fileNames) {
 		SecurityException e = assertThrows(SecurityException.class, () -> resolve(fileNames));
 		return e.getMessage();
@@ -82,6 +96,13 @@ class EgovMultipartResolverTest {
 	@DisplayName("대문자 확장자도 통과한다 — 화이트리스트는 소문자로만 적혀 있다")
 	void 대문자_확장자() {
 		assertEquals(1, resolve("PHOTO.PNG").getMultiFileMap().size());
+	}
+
+	@Test
+	@DisplayName("비워 둔 파일 입력칸이 섞여도 통과한다 — 정책의 빈 파일 거부가 여기 걸리면 안 된다")
+	void 비워둔_입력칸() {
+		assertDoesNotThrow(() -> resolveWithEmptyPart());
+		assertDoesNotThrow(() -> resolveWithEmptyPart("photo.png"));
 	}
 
 	@Test
