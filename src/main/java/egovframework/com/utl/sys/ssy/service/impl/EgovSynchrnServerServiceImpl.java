@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Paths;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.FilenameUtils;
+import org.egovframe.rte.fdl.filehandling.EgovFiles;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
@@ -502,7 +504,7 @@ public class EgovSynchrnServerServiceImpl extends EgovAbstractServiceImpl implem
 	 */
 	private List<File> listLocalSyncPlainFiles() throws Exception {
 
-		File uploadFile = new File(EgovWebUtil.filePathBlackList(SYNCH_SERVER_PATH));
+		File uploadFile = Paths.get(SYNCH_SERVER_PATH).toFile();
 
 		if (!uploadFile.exists()) {
 			//2017.02.08 	이정은 	시큐어코딩(ES)-부적절한 예외 처리[CWE-253, CWE-440, CWE-754]
@@ -577,7 +579,7 @@ public class EgovSynchrnServerServiceImpl extends EgovAbstractServiceImpl implem
 				throw new IOException("업로드 파일 스트림을 열 수 없습니다.");
 			}
 	
-			File cFile = new File(EgovWebUtil.filePathBlackList(SYNCH_SERVER_PATH));
+			File cFile = Paths.get(SYNCH_SERVER_PATH).toFile();
 
 			if (!cFile.isDirectory()) {
 				//2017.02.08 	이정은 	시큐어코딩(ES)-부적절한 예외 처리[CWE-253, CWE-440, CWE-754]
@@ -588,7 +590,7 @@ public class EgovSynchrnServerServiceImpl extends EgovAbstractServiceImpl implem
 				}
 			}
 
-			bos = new FileOutputStream(EgovWebUtil.filePathBlackList(SYNCH_SERVER_PATH + File.separator + FilenameUtils.getName(newName)));
+			bos = new FileOutputStream(uploadedFile(newName));
 
 			int bytesRead = 0;
 			byte[] buffer = new byte[2048];
@@ -630,7 +632,7 @@ public class EgovSynchrnServerServiceImpl extends EgovAbstractServiceImpl implem
 				LOGGER.warn("[file.delete] skip: not in sync file list. {}", nameOnly);
 				continue;
 			}
-			File uploadFile = new File(EgovWebUtil.filePathBlackList(SYNCH_SERVER_PATH + File.separator + nameOnly));
+			File uploadFile = uploadedFile(nameOnly);
 			//2017.02.08 	이정은 	시큐어코딩(ES)-부적절한 예외 처리[CWE-253, CWE-440, CWE-754]
 			if (uploadFile.delete()) {
 				LOGGER.debug("[file.delete] uploadFile : File Deletion Success");
@@ -658,4 +660,23 @@ public class EgovSynchrnServerServiceImpl extends EgovAbstractServiceImpl implem
 			EgovBasicLogger.debug("closeFtpQuietly", e);
 		}
 	}
+
+	/**
+	 * 동기화 업로드 디렉토리 안으로 안전하게 해석한 파일을 돌려준다.
+	 *
+	 * <p>종전에는 {@code SYNCH_SERVER_PATH + File.separator + 이름} 으로 이어붙이고
+	 * {@code EgovWebUtil.filePathBlackList} 로 {@code ".."} 를 지웠다. 설정값이 이미 구분자로
+	 * 끝나 구분자가 겹쳤고({@code /upload/Synch/} + 구분자), {@code ".."} 삭제는 정상 파일명까지
+	 * 훼손했다 — {@code report..2026.pdf} 가 {@code report2026.pdf} 로 바뀌었다.
+	 * 경로 이탈은 {@code FilenameUtils.getName} 이 이미 막고 있었고,
+	 * {@link EgovFiles#resolveSecurely}가 널 바이트·빈 이름까지 함께 거부한다.
+	 * 저장 위치는 종전과 같다.</p>
+	 *
+	 * @param name 파일명(경로가 섞여 있어도 이름만 쓴다)
+	 * @return 업로드 디렉토리 안으로 확정된 파일
+	 */
+	private static File uploadedFile(String name) {
+		return EgovFiles.resolveSecurely(Paths.get(SYNCH_SERVER_PATH), FilenameUtils.getName(name)).toFile();
+	}
+
 }

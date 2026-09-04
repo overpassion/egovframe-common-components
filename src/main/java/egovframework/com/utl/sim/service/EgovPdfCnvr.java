@@ -23,9 +23,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Paths;
 import java.util.Iterator;
 
 import org.apache.commons.io.FilenameUtils;
+import org.egovframe.rte.fdl.filehandling.EgovFiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,7 +38,6 @@ import com.artofsolving.jodconverter.DocumentConverter;
 import com.artofsolving.jodconverter.openoffice.connection.SocketOpenOfficeConnection;
 import com.artofsolving.jodconverter.openoffice.converter.OpenOfficeDocumentConverter;
 
-import egovframework.com.cmm.EgovWebUtil;
 import egovframework.com.cmm.service.EgovProperties;
 import egovframework.com.cmm.util.EgovBasicLogger;
 import egovframework.com.cmm.util.EgovResourceCloseHelper;
@@ -88,7 +89,7 @@ public class EgovPdfCnvr {
 					newName = EgovStringUtil.getTimeStamp();
 					writeFile(mFile, newName);
 
-					File inputFile = new File(EgovWebUtil.filePathBlackList(STORE_FILE_PATH + FilenameUtils.getName(newName)));
+					File inputFile = storedFile(newName);
 
 					if (inputFile.exists()) {
 
@@ -152,7 +153,7 @@ public class EgovPdfCnvr {
 				throw new IOException("업로드 파일 스트림을 열 수 없습니다.");
 			}
 	
-			File cFile = new File(EgovWebUtil.filePathBlackList(STORE_FILE_PATH));
+			File cFile = Paths.get(STORE_FILE_PATH).toFile();
 
 			if (!cFile.isDirectory()) {
 				// 2017.03.03 조성원 시큐어코딩(ES)-부적절한 예외 처리[CWE-253, CWE-440, CWE-754]
@@ -163,7 +164,7 @@ public class EgovPdfCnvr {
 				}
 			}
 
-			bos = new FileOutputStream(EgovWebUtil.filePathBlackList(STORE_FILE_PATH + File.separator + FilenameUtils.getName(newName)));
+			bos = new FileOutputStream(storedFile(newName));
 
 			int bytesRead = 0;
 			byte[] buffer = new byte[BUFF_SIZE];
@@ -175,4 +176,21 @@ public class EgovPdfCnvr {
 			EgovResourceCloseHelper.close(bos, stream);
 		}
 	}
+
+	/**
+	 * 저장소 기준 디렉토리 안으로 안전하게 해석한 파일을 돌려준다.
+	 *
+	 * <p>종전에는 같은 클래스 안에서 이어붙이는 방식이 갈렸다 — 쓸 때는
+	 * {@code STORE_FILE_PATH + File.separator + 이름}, 읽을 때는 구분자 없이
+	 * {@code STORE_FILE_PATH + 이름} 이었다. {@code Globals.fileStorePath} 끝에 구분자가 없어
+	 * 읽기 경로가 {@code /upload/allinone이름} 이 되므로 <b>쓴 파일을 다시 읽지 못했다.</b>
+	 * {@link EgovFiles#resolveSecurely}는 구분자를 알아서 맞추고, 널 바이트·빈 이름도 거부한다.</p>
+	 *
+	 * @param name 파일명(경로가 섞여 있어도 이름만 쓴다)
+	 * @return 저장소 안으로 확정된 파일
+	 */
+	private static File storedFile(String name) {
+		return EgovFiles.resolveSecurely(Paths.get(STORE_FILE_PATH), FilenameUtils.getName(name)).toFile();
+	}
+
 }

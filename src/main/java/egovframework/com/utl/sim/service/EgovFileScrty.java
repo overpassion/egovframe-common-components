@@ -23,12 +23,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.FilenameUtils;
 
-import egovframework.com.cmm.EgovWebUtil;
+import org.apache.commons.io.FilenameUtils;
+import org.egovframe.rte.fdl.filehandling.EgovFiles;
+
 import egovframework.com.cmm.service.EgovProperties;
 import egovframework.com.cmm.util.EgovResourceCloseHelper;
 
@@ -67,7 +69,7 @@ public class EgovFileScrty {
 		// 암호화 여부
 		boolean result = false;
 
-		File srcFile = new File(EgovWebUtil.filePathBlackList(STORE_FILE_PATH + FilenameUtils.getName(source)));
+		File srcFile = storedFile(source);
 
 		BufferedInputStream input = null;
 		BufferedOutputStream output = null;
@@ -78,7 +80,7 @@ public class EgovFileScrty {
 		    if (srcFile.exists() && srcFile.isFile()) {
 
 				input = new BufferedInputStream(new FileInputStream(srcFile));
-				output = new BufferedOutputStream(new FileOutputStream(EgovWebUtil.filePathBlackList(STORE_FILE_PATH + FilenameUtils.getName(target))));
+				output = new BufferedOutputStream(new FileOutputStream(storedFile(target)));
 
 				int length = 0;
 				while ((length = input.read(buffer)) >= 0) {
@@ -109,7 +111,7 @@ public class EgovFileScrty {
 		// 복호화 여부
 		boolean result = false;
 
-		File srcFile = new File(EgovWebUtil.filePathBlackList(STORE_FILE_PATH + FilenameUtils.getName(source)));
+		File srcFile = storedFile(source);
 
 		BufferedReader input = null;
 		BufferedOutputStream output = null;
@@ -121,7 +123,7 @@ public class EgovFileScrty {
 		    if (srcFile.exists() && srcFile.isFile()) {
 
 			input = new BufferedReader(new InputStreamReader(new FileInputStream(srcFile)));
-			output = new BufferedOutputStream(new FileOutputStream(EgovWebUtil.filePathBlackList(STORE_FILE_PATH + FilenameUtils.getName(target))));
+			output = new BufferedOutputStream(new FileOutputStream(storedFile(target)));
 
 			while ((line = input.readLine()) != null) {
 			    byte[] data = line.getBytes();
@@ -258,5 +260,28 @@ public class EgovFileScrty {
 
     	return MessageDigest.isEqual(hashValue, Base64.decodeBase64(encoded.getBytes()));
     }
+
+
+	/**
+	 * 저장소 기준 디렉토리 안으로 안전하게 해석한 파일을 돌려준다.
+	 *
+	 * <p>종전에는 {@code STORE_FILE_PATH + FilenameUtils.getName(name)} 로 이어붙이고
+	 * {@code EgovWebUtil.filePathBlackList} 로 {@code ".."} 를 지웠다. 두 가지가 잘못돼 있었다.</p>
+	 * <ul>
+	 *   <li><b>구분자가 빠졌다.</b> {@code Globals.fileStorePath} 는 끝에 구분자가 없어
+	 *       {@code /upload/allinone} + {@code REPORT.TXT} 가 {@code /upload/allinoneREPORT.TXT} 가 됐다.</li>
+	 *   <li><b>정상 파일명을 훼손했다.</b> {@code ".."} 삭제 때문에 {@code report..2026.pdf} 가
+	 *       {@code report2026.pdf} 로 바뀌어 엉뚱한 파일을 읽고 썼다.</li>
+	 * </ul>
+	 *
+	 * <p>경로 이탈은 {@code FilenameUtils.getName} 이 이미 막고 있었고,
+	 * {@link EgovFiles#resolveSecurely}가 널 바이트·빈 이름까지 함께 거부한다.</p>
+	 *
+	 * @param name 파일명(경로가 섞여 있어도 이름만 쓴다)
+	 * @return 저장소 안으로 확정된 파일
+	 */
+	private static File storedFile(String name) {
+		return EgovFiles.resolveSecurely(Paths.get(STORE_FILE_PATH), FilenameUtils.getName(name)).toFile();
+	}
 
 }
