@@ -3,9 +3,13 @@ package egovframework.com.utl.sys.ssy.web;
 import java.io.File;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
+import org.egovframe.rte.fdl.filehandling.EgovFiles;
+import org.egovframe.rte.fdl.filehandling.upload.EgovUploadPolicy;
 import org.egovframe.rte.fdl.idgnr.EgovIdGnrService;
 import org.egovframe.rte.ptl.mvc.tags.ui.pagination.PaginationInfo;
+import org.egovframe.rte.ptl.mvc.upload.EgovMultipartFiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -30,7 +34,6 @@ import egovframework.com.cmm.service.EgovCmmUseService;
 import egovframework.com.cmm.service.EgovFileMngUtil;
 import egovframework.com.cmm.service.EgovProperties;
 import egovframework.com.cmm.util.EgovUserDetailsHelper;
-import egovframework.com.utl.fcc.service.EgovFileUploadUtil;
 import egovframework.com.utl.fcc.service.EgovStringUtil;
 import egovframework.com.utl.sys.ssy.service.EgovSynchrnServerService;
 import egovframework.com.utl.sys.ssy.service.SynchrnServer;
@@ -362,31 +365,62 @@ public class EgovSynchrnServerController {
 
 		if (multipartFile != null) {
 			String fileName = multipartFile.getOriginalFilename();
-			String extension = EgovFileUploadUtil.getFileExtension(fileName);
 
-			// 파일업로드 제한
-			String whiteListFileUploadExtensions = EgovProperties.getProperty("Globals.fileUpload.Extensions");
-			long maxFileSize = Long.parseLong(EgovProperties.getProperty("Globals.fileUpload.maxSize"));
-			long fileSize = multipartFile.getSize();
+			// 파일업로드 제한 — 확장자 화이트리스트와 최대 크기를 실행환경 정책 하나로 판정한다.
+			EgovUploadPolicy policy = uploadPolicy();
+			Optional<EgovUploadPolicy.Reason> rejected = EgovMultipartFiles.check(policy, multipartFile);
 
-			boolean resultFileExtention = EgovFileUploadUtil.checkFileExtension(fileName, whiteListFileUploadExtensions);
-			boolean resultFileMaxSize = EgovFileUploadUtil.checkFileMaxSize(multipartFile, maxFileSize);
-
-			if (resultFileExtention && resultFileMaxSize) { // true = 허용
+			if (rejected.isEmpty()) { // 위반 없음 = 허용
 				egovSynchrnServerService.writeFile(multipartFile, fileName, synchrnServer);
 			} else {
-				if (!resultFileExtention) {
-					model.addAttribute("fileUploadResultMessage", "* 허용되지 않는 확장자 입니다.[" + extension + "]");
-				}
-				if (!resultFileMaxSize) {
-					model.addAttribute("fileUploadResultMessage",
-						"* 허용되지 않는 파일 사이즈 입니다.[" + fileName + " : " + fileSize + " bytes / " + maxFileSize + " bytes]");
-				}
+				model.addAttribute("fileUploadResultMessage",
+					rejectMessage(rejected.get(), fileName, multipartFile.getSize(), policy));
 			}
 
 		}
 
 		return "forward:/utl/sys/ssy/selectSynchrnServerList.do";
+	}
+
+	/**
+	 * 업로드 정책을 설정에서 만든다.
+	 *
+	 * <p>종전에는 확장자 검사({@code checkFileExtension})와 크기 검사({@code checkFileMaxSize})가
+	 * 따로였다. 실행환경 {@link EgovUploadPolicy} 로 합치면 파일명 없음·빈 파일·확장자 없음까지
+	 * 함께 판정된다. 화이트리스트가 비어 있으면 아무 확장자도 허용하지 않는다 —
+	 * 종전 {@code isAllowedExtension} 이 빈 목록에서 {@code false} 를 돌려주던 것과 같다.</p>
+	 *
+	 * @return 업로드 정책
+	 */
+	private EgovUploadPolicy uploadPolicy() {
+		return EgovUploadPolicy.builder()
+			.allowExtensionList(EgovProperties.getProperty("Globals.fileUpload.Extensions"))
+			.maxFileSize(Long.parseLong(EgovProperties.getProperty("Globals.fileUpload.maxSize")))
+			.build();
+	}
+
+	/**
+	 * 거부 사유를 화면 메시지로 옮긴다. 확장자·크기 메시지는 종전 문구를 그대로 쓴다.
+	 *
+	 * @param reason   거부 사유
+	 * @param fileName 업로드 파일명
+	 * @param fileSize 업로드 파일 크기
+	 * @param policy   적용한 정책
+	 * @return 화면에 보일 메시지
+	 */
+	private String rejectMessage(EgovUploadPolicy.Reason reason, String fileName, long fileSize,
+			EgovUploadPolicy policy) {
+		switch (reason) {
+			case SIZE_EXCEEDED:
+				return "* 허용되지 않는 파일 사이즈 입니다.[" + fileName + " : " + fileSize + " bytes / "
+					+ policy.getMaxFileSize() + " bytes]";
+			case NO_FILENAME:
+			case EMPTY_FILE:
+				// 종전에는 빈 파일이 두 검사를 모두 통과해 writeFile 에서 IOException 으로 터졌다.
+				return "* 업로드할 파일을 선택하세요.";
+			default:
+				return "* 허용되지 않는 확장자 입니다.[" + EgovFiles.getExtension(fileName) + "]";
+		}
 	}
 
 	/**

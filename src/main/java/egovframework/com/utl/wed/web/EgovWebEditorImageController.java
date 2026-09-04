@@ -7,9 +7,12 @@ import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Locale;
 
 import org.egovframe.rte.fdl.crypto.EgovEnvCryptoService;
 import org.egovframe.rte.fdl.crypto.EgovPasswordEncoder;
+import org.egovframe.rte.fdl.filehandling.EgovFiles;
+import org.egovframe.rte.fdl.filehandling.upload.EgovUploadPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -67,6 +70,18 @@ public class EgovWebEditorImageController {
 
 	/** 첨부 최대 파일 크기 지정 */
 	private final long maxFileSize = 1024L * 1024L * 100L;   //업로드 최대 사이즈 설정 (100M)
+
+	/**
+	 * 업로드·조회 공통 정책.
+	 *
+	 * <p>확장자 화이트리스트는 {@code Globals.fileUpload.Extensions} 를 따른다.
+	 * 값이 비어 있으면 허용 목록이 비어 아무 확장자도 통과하지 않는다 —
+	 * 종전 {@code isAllowedExtension} 이 빈 목록에서 {@code false} 를 돌려주던 것과 같다.</p>
+	 */
+	private final EgovUploadPolicy uploadPolicy = EgovUploadPolicy.builder()
+			.allowExtensionList(extWhiteList)
+			.maxFileSize(maxFileSize)
+			.build();
 
 	/** 암호화서비스 */
 	@Resource(name = "egovEnvCryptoService")
@@ -204,19 +219,14 @@ public class EgovWebEditorImageController {
 			throw new FileNotFoundException();
 		}
 
-		String ext = "";
-		if ( physical.lastIndexOf(".") > 0 ) {
-			ext = physical.substring(physical.lastIndexOf(".") + 1,physical.length()).toLowerCase();
-		}
-		if ( ext == null ) {
+		// 확장자 추출·허용판정을 실행환경 API 로 통일한다. 종전 toLowerCase() 는 로캘 인자가 없어
+		// 터키어 로캘에서 "GIF" 가 "gıf"(점 없는 i)로 바뀌어 화이트리스트에 걸리지 않았다.
+		String ext = EgovFiles.getExtension(physical).toLowerCase(Locale.ROOT);
+		if (!uploadPolicy.getAllowedExtensions().contains(ext)) {
 			throw new FileNotFoundException();
 		}
 
-		if ( EgovFileUploadUtil.isAllowedExtension(ext, extWhiteList) ) {
-			EgovFormBasedFileUtil.viewFile(response, uploadDir, subPath, physical, mimeType);
-		} else {
-			throw new FileNotFoundException();
-		}
+		EgovFormBasedFileUtil.viewFile(response, uploadDir, subPath, physical, mimeType);
 	}
 
 	/**

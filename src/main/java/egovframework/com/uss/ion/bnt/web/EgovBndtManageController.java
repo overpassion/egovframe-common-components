@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.egovframe.rte.fdl.filehandling.EgovFiles;
 import org.egovframe.rte.ptl.mvc.tags.ui.pagination.PaginationInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,6 @@ import egovframework.com.uss.ion.bnt.service.BndtDiaryVO;
 import egovframework.com.uss.ion.bnt.service.BndtManageVO;
 import egovframework.com.uss.ion.bnt.service.EgovBndtManageService;
 import egovframework.com.utl.fcc.service.EgovDateUtil;
-import egovframework.com.utl.fcc.service.EgovFileUploadUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -664,8 +664,11 @@ public class EgovBndtManageController {
 				Entry<String, MultipartFile> entry = itr.next();
 				file = entry.getValue();
 				if (!"".equals(file.getOriginalFilename())) {
-					String ext = EgovFileUploadUtil.getFileExtension(file.getOriginalFilename());
-					if (ext != null && "xlsx".equalsIgnoreCase(ext)) {
+					// 확장자 추출을 실행환경 EgovFiles 로 통일한다. 종전 EgovFileUploadUtil.getFileExtension 은
+					// 점이 없는 이름을 통째로 확장자로 돌려줘, "xlsx" 라는 이름의 확장자 없는 파일을
+					// 엑셀로 읽으려 했다. EgovFiles.getExtension 은 그 경우 빈 문자열을 준다(null 을 주지 않는다).
+					String ext = EgovFiles.getExtension(file.getOriginalFilename());
+					if ("xlsx".equalsIgnoreCase(ext)) {
 						// 2026.02.28 KISA 보안약점 조치
 						try (InputStream is = new ByteArrayInputStream(file.getBytes())) {
 							List<BndtManageVO> bndeList = egovBndtManageService.selectBndtManageBndeX(is);
@@ -682,7 +685,7 @@ public class EgovBndtManageController {
 							model.addAttribute("bndtManageList", Collections.emptyList());
 							resultMsg = egovMessageSource.getMessage("fail.common.msg") + " (xlsx: " + e.getMessage() + ")";
 						}
-					} else if (ext != null && "xls".equalsIgnoreCase(ext)) {
+					} else if ("xls".equalsIgnoreCase(ext)) {
 						try (InputStream is = file.getInputStream()) {
 							model.addAttribute("bndtManageList", egovBndtManageService.selectBndtManageBnde(is));
 						}
