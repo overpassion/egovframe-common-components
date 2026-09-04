@@ -5,6 +5,8 @@ import java.util.List;
 import org.egovframe.rte.fdl.cmmn.EgovAbstractServiceImpl;
 import org.egovframe.rte.fdl.cmmn.code.EgovCodeCache;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import egovframework.com.cmm.service.CmmnDetailCode;
 import egovframework.com.sym.ccm.cde.service.CmmnDetailCodeVO;
@@ -80,7 +82,7 @@ public class EgovCcmCmmnDetailCodeManageServiceImpl extends EgovAbstractServiceI
 	@Override
 	public void deleteCmmnDetailCode(CmmnDetailCodeVO cmmnDetailCodeVO) throws Exception {
 		cmmnDetailCodeManageDAO.deleteCmmnDetailCode(cmmnDetailCodeVO);
-		egovCodeCache.reload();
+		reloadCodeCacheAfterCommit();
 	}
 
 	/**
@@ -89,7 +91,7 @@ public class EgovCcmCmmnDetailCodeManageServiceImpl extends EgovAbstractServiceI
 	@Override
 	public void insertCmmnDetailCode(CmmnDetailCodeVO cmmnDetailCodeVO) throws Exception {
 		cmmnDetailCodeManageDAO.insertCmmnDetailCode(cmmnDetailCodeVO);
-		egovCodeCache.reload();
+		reloadCodeCacheAfterCommit();
 	}
 
 	/**
@@ -98,7 +100,36 @@ public class EgovCcmCmmnDetailCodeManageServiceImpl extends EgovAbstractServiceI
 	@Override
 	public void updateCmmnDetailCode(CmmnDetailCodeVO cmmnDetailCodeVO) throws Exception {
 		cmmnDetailCodeManageDAO.updateCmmnDetailCode(cmmnDetailCodeVO);
-		egovCodeCache.reload();
+		reloadCodeCacheAfterCommit();
+	}
+
+	/**
+	 * 트랜잭션이 <b>커밋된 뒤</b> 공통코드 스냅숏을 갱신한다.
+	 *
+	 * <p>등록·수정·삭제 메서드 안에서 {@link EgovCodeCache#reload()} 를 곧바로 부르면 안 된다.
+	 * {@code context-transaction.xml} 의 {@code execution(* egovframework.com..*Impl.*(..))} 포인트컷이
+	 * 이 메서드들을 트랜잭션으로 감싸고, {@code egovCodeCache} 가 쓰는 {@code egov.dataSource} 는
+	 * {@code dataSource} 의 <b>별칭</b>이라 같은 인스턴스다. 그래서 {@code JdbcTemplate} 이
+	 * 진행 중인 트랜잭션의 커넥션에 합류해 <b>아직 커밋되지 않은 행</b>까지 읽어들인다.
+	 * 이후 트랜잭션이 롤백되면 DB 에는 없는 코드가 캐시에만 남는다(실측: 캐시 417건 vs DB 416건).</p>
+	 *
+	 * <p>커밋 성공 시에만 갱신하도록 동기화 콜백으로 미룬다. 트랜잭션이 없으면(단위 테스트 등)
+	 * 즉시 갱신한다. 갱신 실패는 예외로 올리지 않고 로그로 남긴다 — 이미 커밋된 저장을
+	 * 실패로 보이게 만드는 편이 더 나쁘다. 대신 캐시가 낡은 채로 남으므로 로그를 확인해야 한다.</p>
+	 */
+	private void reloadCodeCacheAfterCommit() {
+		if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+			egovCodeCache.reload();
+			return;
+		}
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCompletion(int status) {
+				if (status == STATUS_COMMITTED) {
+					egovCodeCache.reload();
+				}
+			}
+		});
 	}
 
 }
