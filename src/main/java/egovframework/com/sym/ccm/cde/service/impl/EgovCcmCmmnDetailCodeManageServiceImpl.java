@@ -3,6 +3,7 @@ package egovframework.com.sym.ccm.cde.service.impl;
 import java.util.List;
 
 import org.egovframe.rte.fdl.cmmn.EgovAbstractServiceImpl;
+import org.egovframe.rte.fdl.cmmn.code.EgovCodeCache;
 import org.springframework.stereotype.Service;
 
 import egovframework.com.cmm.service.CmmnDetailCode;
@@ -32,6 +33,19 @@ public class EgovCcmCmmnDetailCodeManageServiceImpl extends EgovAbstractServiceI
 
     @Resource(name="CmmnDetailCodeManageDAO")
     private CmmnDetailCodeManageDAO cmmnDetailCodeManageDAO;
+
+	/**
+	 * 공통코드 스냅숏 캐시. 코드를 바꾼 뒤 갱신해야 조회에 반영된다.
+	 *
+	 * <p>종전에는 조회가 매번 DB 를 읽어 항상 최신이었다. 캐시 도입으로 갱신 시점이
+	 * 명시적이 됐으므로 등록·수정·삭제 끝에 {@link EgovCodeCache#reload()} 를 부른다.</p>
+	 *
+	 * <p><b>다중 서버 배치 주의.</b> reload() 는 이 서버의 스냅숏만 갱신한다.
+	 * 여러 서버로 운영하면 나머지 서버는 재기동 전까지 종전 코드를 보게 되므로,
+	 * 서버별 갱신 수단을 별도로 두어야 한다.</p>
+	 */
+	@Resource(name = "egovCodeCache")
+	private EgovCodeCache egovCodeCache;
 
 	/**
 	 * 공통상세코드 총 개수를 조회한다.
@@ -66,7 +80,7 @@ public class EgovCcmCmmnDetailCodeManageServiceImpl extends EgovAbstractServiceI
 	@Override
 	public void deleteCmmnDetailCode(CmmnDetailCodeVO cmmnDetailCodeVO) throws Exception {
 		cmmnDetailCodeManageDAO.deleteCmmnDetailCode(cmmnDetailCodeVO);
-
+		egovCodeCache.reload();
 	}
 
 	/**
@@ -75,7 +89,7 @@ public class EgovCcmCmmnDetailCodeManageServiceImpl extends EgovAbstractServiceI
 	@Override
 	public void insertCmmnDetailCode(CmmnDetailCodeVO cmmnDetailCodeVO) throws Exception {
 		cmmnDetailCodeManageDAO.insertCmmnDetailCode(cmmnDetailCodeVO);
-
+		egovCodeCache.reload();
 	}
 
 	/**
@@ -84,7 +98,7 @@ public class EgovCcmCmmnDetailCodeManageServiceImpl extends EgovAbstractServiceI
 	@Override
 	public void updateCmmnDetailCode(CmmnDetailCodeVO cmmnDetailCodeVO) throws Exception {
 		cmmnDetailCodeManageDAO.updateCmmnDetailCode(cmmnDetailCodeVO);
-
+		egovCodeCache.reload();
 	}
 
 }

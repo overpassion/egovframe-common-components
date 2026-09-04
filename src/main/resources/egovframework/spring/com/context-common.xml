@@ -67,6 +67,28 @@
 
 	<bean id="egov.defaultTraceHandler" class="org.egovframe.rte.fdl.cmmn.trace.handler.DefaultTraceHandler" />
 
+	<!-- 공통코드 캐시 (실행환경 EgovCodeCache)
+	     COMTCCMMNDETAILCODE 를 기동 시 전량 적재해 불변 스냅숏으로 보관한다.
+	     조회는 DB 왕복이 없고, 코드 변경 시 EgovCcmCmmnDetailCodeManageServiceImpl 이
+	     reload() 를 호출한다. 다중 서버 배치에서는 서버마다 갱신이 필요하다.
+
+	     컬럼 별칭은 EgovJdbcCodeLoader 의 계약을 따른다
+	     (GROUP_ID·CODE·NAME 필수, DESCRIPTION·ENABLED·SORT_ORDER 선택). -->
+	<bean id="egovCodeLoader" class="org.egovframe.rte.fdl.cmmn.code.EgovJdbcCodeLoader">
+		<constructor-arg ref="dataSource" />
+		<constructor-arg>
+			<value>
+				SELECT CODE_ID AS GROUP_ID, CODE, CODE_NM AS NAME, CODE_DC AS DESCRIPTION,
+				       USE_AT AS ENABLED, 0 AS SORT_ORDER
+				FROM COMTCCMMNDETAILCODE
+			</value>
+		</constructor-arg>
+	</bean>
+
+	<bean id="egovCodeCache" class="org.egovframe.rte.fdl.cmmn.code.EgovCodeCache">
+		<constructor-arg ref="egovCodeLoader" />
+	</bean>
+
 	<!-- MULTIPART RESOLVERS : Spring Framework 6.2.8 기반 파일 업로드 설정 -->
 	<bean id="multipartResolver" class="egovframework.com.cmm.web.EgovMultipartResolver" />
 	<alias name="multipartResolver" alias="local.MultiCommonsMultipartResolver" />
