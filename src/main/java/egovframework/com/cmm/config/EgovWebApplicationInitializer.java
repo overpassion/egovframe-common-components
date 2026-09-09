@@ -13,8 +13,9 @@ import org.springframework.web.multipart.support.MultipartFilter;
 import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.FrameworkServlet;
 
-import egovframework.com.cmm.filter.HTMLTagFilter;
-import egovframework.com.cmm.filter.SessionTimeoutCookieFilter;
+import org.egovframe.rte.ptl.mvc.filter.HTMLTagFilter;
+import org.egovframe.rte.ptl.mvc.session.EgovSessionExpiryCookieFilter;
+
 import egovframework.com.cmm.service.EgovProperties;
 import egovframework.com.uat.uap.filter.EgovLoginPolicyFilter;
 import egovframework.com.utl.wed.filter.CkFilter;
@@ -187,15 +188,24 @@ public class EgovWebApplicationInitializer implements WebApplicationInitializer 
 		//-------------------------------------------------------------
 	    // HTMLTagFIlter의 경우는 JSP의 <c:out /> 등을 사용하지 못하는 특수한 상황에서 사용하시면 됩니다.
 	    // (<c:out />의 경우 뷰단에서 데이터 출력시 XSS 방지 처리가 됨)
+	    // 실행환경 ptl.mvc 의 HTMLTagFilter 를 쓴다. 공통컴포넌트 사본이 소스에 하드코딩했던 두 동작을 초기화 파라미터로 옮긴다.
+	    //  - allowedTags        : 사본의 화이트리스트 태그 <p>·</p>·<br /> (이름 기반이라 <br/>·<BR> 도 인식, 속성이 붙으면 거부)
+	    //  - richTextParameters : 사본이 인코딩을 건너뛰던 리치텍스트 파라미터 4종. 출력 시 egovc:sanitizeHtml 로 정제한다.
+	    // 사본과 달리 & 를 인코딩하고 ( ) 는 치환하지 않으며, getParameterValues/getParameterMap 원본 배열을 변조하지 않는다.
 		FilterRegistration.Dynamic htmlTagFilter = servletContext.addFilter("htmlTagFilter", new HTMLTagFilter());
+		htmlTagFilter.setInitParameter(HTMLTagFilter.INIT_PARAM_ALLOWED_TAGS, "p, br");
+		htmlTagFilter.setInitParameter(HTMLTagFilter.INIT_PARAM_RICH_TEXT_PARAMETERS, "schdulCn, nttCn, onlineMnlDc, indvdlInfoDc");
 		htmlTagFilter.addMappingForUrlPatterns(null, false, "*.do");
 
 		//-------------------------------------------------------------
-	    // SessionTimeoutCookieFilter는 쿠키에 타임아웃 시간을 기록한다.
+	    // EgovSessionExpiryCookieFilter 는 쿠키에 서버 시각과 세션 만료 시각을 기록한다.
 		//-------------------------------------------------------------
-	    // latestServerTime - 서버 최근 시간
-	    // expireSessionTime - 세션이 만료되는 시간
-		FilterRegistration.Dynamic sessionTimeoutFilter = servletContext.addFilter("sessionTimeoutFilter", new SessionTimeoutCookieFilter());
+	    // egovLatestServerTime  - 서버 최근 시간
+	    // egovExpireSessionTime - 세션이 만료되는 시간
+	    // 쿠키 이름은 공통컴포넌트 사본(SessionTimeoutCookieFilter)과 같다. 사본과 달리 세션을 강제로 만들지 않고 있을 때만
+	    // 발행하며, httpOnly 기본값이 false 라 화면 스크립트가 잔여 시간을 직접 읽을 수 있다(사본은 true 라 목적과 모순이었다).
+	    // 되돌리려면 setInitParameter("httpOnly", "true"). 무제한 세션은 -1 로 표기된다.
+		FilterRegistration.Dynamic sessionTimeoutFilter = servletContext.addFilter("sessionTimeoutFilter", new EgovSessionExpiryCookieFilter());
 		sessionTimeoutFilter.addMappingForUrlPatterns(null, false, "*.do");
 
 		//-------------------------------------------------------------
