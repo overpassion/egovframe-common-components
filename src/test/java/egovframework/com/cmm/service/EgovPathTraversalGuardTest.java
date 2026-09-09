@@ -91,7 +91,7 @@ class EgovPathTraversalGuardTest {
 			}
 		}
 
-		assertEquals(0, escaped, "기준 디렉토리를 벗어나는 입력이 통과하면 안 된다");
+		assertEquals(0, escaped, "기준 디렉터리를 벗어나는 입력이 통과하면 안 된다");
 	}
 
 	@Test

@@ -55,8 +55,8 @@ class EgovFormBasedFileUtilTest {
 	}
 
 	@Test
-	@DisplayName("기본 로캘이 바뀌어도 형식이 같다 — 대문자 변환이 로캘을 타지 않는다")
-	void 로캘_무관() {
+	@DisplayName("기본 로케일(Locale)이 바뀌어도 형식이 같다 — 대문자 변환이 로케일을 타지 않는다")
+	void 로케일_무관() {
 		Locale.setDefault(new Locale("tr", "TR"));
 
 		String name = EgovFormBasedFileUtil.getPhysicalFileName();

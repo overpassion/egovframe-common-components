@@ -63,7 +63,7 @@ class EgovStoredFilePathTest {
 	}
 
 	@Test
-	@DisplayName("기준 디렉토리와 파일명 사이에 구분자가 들어간다")
+	@DisplayName("기준 디렉터리와 파일명 사이에 구분자가 들어간다")
 	void 구분자가_들어간다() throws Exception {
 		File file = scrty("REPORT.TXT");
 

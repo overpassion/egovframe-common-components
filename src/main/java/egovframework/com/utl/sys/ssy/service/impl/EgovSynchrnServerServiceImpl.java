@@ -662,7 +662,7 @@ public class EgovSynchrnServerServiceImpl extends EgovAbstractServiceImpl implem
 	}
 
 	/**
-	 * 동기화 업로드 디렉토리 안으로 안전하게 해석한 파일을 돌려준다.
+	 * 동기화 업로드 디렉터리 안으로 안전하게 해석한 파일을 돌려준다.
 	 *
 	 * <p>종전에는 {@code SYNCH_SERVER_PATH + File.separator + 이름} 으로 이어붙이고
 	 * {@code EgovWebUtil.filePathBlackList} 로 {@code ".."} 를 지웠다. 설정값이 이미 구분자로
@@ -673,7 +673,7 @@ public class EgovSynchrnServerServiceImpl extends EgovAbstractServiceImpl implem
 	 * 저장 위치는 종전과 같다.</p>
 	 *
 	 * @param name 파일명(경로가 섞여 있어도 이름만 쓴다)
-	 * @return 업로드 디렉토리 안으로 확정된 파일
+	 * @return 업로드 디렉터리 안으로 확정된 파일
 	 */
 	private static File uploadedFile(String name) {
 		return EgovFiles.resolveSecurely(Paths.get(SYNCH_SERVER_PATH), FilenameUtils.getName(name)).toFile();

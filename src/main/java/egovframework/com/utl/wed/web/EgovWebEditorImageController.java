@@ -216,8 +216,8 @@ public class EgovWebEditorImageController {
 			throw new FileNotFoundException();
 		}
 
-		// 확장자 추출·허용판정을 실행환경 API 로 통일한다. 종전 toLowerCase() 는 로캘 인자가 없어
-		// 터키어 로캘에서 "GIF" 가 "gıf"(점 없는 i)로 바뀌어 화이트리스트에 걸리지 않았다.
+		// 확장자 추출·허용판정을 실행환경 API 로 통일한다. 종전 toLowerCase() 는 로케일(Locale) 인자가 없어
+		// 터키어 로케일에서 "GIF" 가 "gıf"(점 없는 i)로 바뀌어 화이트리스트에 걸리지 않았다.
 		String ext = EgovFiles.getExtension(physical).toLowerCase(Locale.ROOT);
 		if (!uploadPolicy.getAllowedExtensions().contains(ext)) {
 			throw new FileNotFoundException();

@@ -263,7 +263,7 @@ public class EgovFileScrty {
 
 
 	/**
-	 * 저장소 기준 디렉토리 안으로 안전하게 해석한 파일을 돌려준다.
+	 * 저장소 기준 디렉터리 안으로 안전하게 해석한 파일을 돌려준다.
 	 *
 	 * <p>종전에는 {@code STORE_FILE_PATH + FilenameUtils.getName(name)} 로 이어붙이고
 	 * {@code EgovWebUtil.filePathBlackList} 로 {@code ".."} 를 지웠다. 두 가지가 잘못돼 있었다.</p>

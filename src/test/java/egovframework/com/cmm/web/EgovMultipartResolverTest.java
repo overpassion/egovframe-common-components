@@ -160,8 +160,8 @@ class EgovMultipartResolverTest {
 	}
 
 	@Test
-	@DisplayName("판정이 기본 로캘에 흔들리지 않는다 — 터키어 로캘에서 확인")
-	void 로캘_무관() {
+	@DisplayName("판정이 기본 로케일(Locale)에 흔들리지 않는다 — 터키어 로케일에서 확인")
+	void 로케일_무관() {
 		Locale.setDefault(new Locale("tr", "TR"));
 
 		assertEquals(1, resolve("PHOTO.PNG").getMultiFileMap().size());
