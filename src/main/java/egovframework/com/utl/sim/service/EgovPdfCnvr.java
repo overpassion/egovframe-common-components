@@ -28,6 +28,7 @@ import java.util.Iterator;
 
 import org.apache.commons.io.FilenameUtils;
 import org.egovframe.rte.fdl.filehandling.EgovFiles;
+import org.egovframe.rte.fdl.filehandling.upload.EgovStoredFileNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
@@ -85,8 +86,8 @@ public class EgovPdfCnvr {
 
 					String newName = "";
 
-					//newName 은 Naming Convention에 의해서 생성
-					newName = EgovStringUtil.getTimeStamp();
+					// 변환 원본의 저장명 — 실행환경 EgovStoredFileNames(UUID 32자). 종전 시각 문자열은 같은 밀리초에 충돌했다.
+					newName = EgovStoredFileNames.generateWithoutExtension();
 					writeFile(mFile, newName);
 
 					File inputFile = storedFile(newName);

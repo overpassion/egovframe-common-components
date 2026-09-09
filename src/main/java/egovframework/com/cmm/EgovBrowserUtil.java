@@ -1,9 +1,10 @@
 package egovframework.com.cmm;
 
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.egovframe.rte.fdl.filehandling.EgovContentDispositions;
 
 /**
  * 웹브라우저 종류및 버전 파악하기 ( IE및 Edge, Safari, Chrome, Firefox, Opera )
@@ -15,6 +16,7 @@ import java.util.regex.Pattern;
  *  -----------  --------    ---------------------------
  *   2018.08.27  신용호              최초 생성
  *   2026.07.11  이석곤              브라우저 판별 정규식을 static final로 호이스팅 (호출마다 재컴파일 제거)
+ *   2026.09.10  실행환경팀            getDisposition 을 실행환경 EgovContentDispositions(RFC 6266) 위임으로 교체 — 브라우저 판별 분기·미지원 브라우저 예외 제거
  *
  * </pre>
  */
@@ -113,21 +115,23 @@ public class EgovBrowserUtil {
 		return result;
 	}
 	
-	public static String getDisposition(String filename, String userAgent, String charSet) throws Exception {
-		
-		String encodedFilename = null;
-		HashMap<String,String> result = EgovBrowserUtil.getBrowser(userAgent);
-		float version = Float.parseFloat(result.get(EgovBrowserUtil.VERSIONKEY));
-		
-		if ( EgovBrowserUtil.MSIE.equals(result.get(EgovBrowserUtil.TYPEKEY)) && version <= 8.0f ) {
-			encodedFilename = "Content-Disposition: attachment; filename="+URLEncoder.encode(filename, charSet).replaceAll("\\+", "%20");
-		} else if ( EgovBrowserUtil.OTHER.equals(result.get(EgovBrowserUtil.TYPEKEY)) ) {
-			throw new RuntimeException("Not supported browser");
-		} else {
-			encodedFilename = "attachment; filename*="+charSet+"''"+URLEncoder.encode(filename, charSet);
-		}
-		
-		return encodedFilename;
+	/**
+	 * 첨부 다운로드용 Content-Disposition 헤더값을 만든다.
+	 *
+	 * <p>종전에는 브라우저 종류·버전으로 헤더 형식을 갈랐다 — IE 8 이하는 값 앞에 헤더 이름까지 붙인 잘못된 형식이었고,
+	 * 판별되지 않는 브라우저는 {@code RuntimeException("Not supported browser")} 로 다운로드 자체가 막혔으며,
+	 * 그 외는 ASCII 폴백 없는 {@code filename*} 만 실었다. 지금은 실행환경 {@link EgovContentDispositions} 의
+	 * RFC 6266 표준 형식 하나로 통일한다(비ASCII 는 {@code filename*=UTF-8''} + ASCII 폴백 병기, 제어문자 제거).</p>
+	 *
+	 * @param filename 원본 파일명
+	 * @param userAgent 무시된다(호환용)
+	 * @param charSet 무시된다(항상 UTF-8)
+	 * @return Content-Disposition 헤더값
+	 * @deprecated 실행환경 {@link EgovContentDispositions#attachment(String)} 를 직접 사용한다.
+	 */
+	@Deprecated
+	public static String getDisposition(String filename, String userAgent, String charSet) {
+		return EgovContentDispositions.attachment(filename);
 	}
 
 	//KISA 보안약점 조치 (2018-10-29, 윤창원)

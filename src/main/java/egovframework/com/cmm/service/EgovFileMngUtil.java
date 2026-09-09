@@ -9,14 +9,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -26,6 +22,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
+import org.egovframe.rte.fdl.filehandling.EgovContentDispositions;
+import org.egovframe.rte.fdl.filehandling.upload.EgovStoredFileNames;
 import org.egovframe.rte.fdl.idgnr.EgovIdGnrService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +55,7 @@ import egovframework.com.cmm.EgovWebUtil;
  *   2025.05.26  이백행          PMD로 소프트웨어 보안약점 진단하고 제거하기-FormalParameterNamingConventions(공식 매개변수 명명 규칙), CloseResource(리소스 닫기), LocalVariableNamingConventions(지역 변수 명명 규칙), AssignmentInOperand(피연산자의 할당)
  *   2026.07.15  EricSeokgon     다운로드 Content-Disposition 헤더 이름 수정
  *   2026.08.25  이기하          downFile(request, response) 원본 파일명 속성키를 가이드 기준(orginFile)으로 통일
+ *   2026.09.10  실행환경팀        저장 파일명을 실행환경 EgovStoredFileNames(UUID)로, Content-Disposition 헤더를 EgovContentDispositions(RFC 6266)로 이전
  *
  *      </pre>
  */
@@ -121,7 +120,7 @@ public class EgovFileMngUtil {
 
 			// 2022.11.11 시큐어코딩 처리
 			String fileExt = FilenameUtils.getExtension(orginFileName).toUpperCase();
-			String newName = keyStr + getTimeStamp() + fileKey;
+			String newName = storedFileName(keyStr, fileKey);
 			long size = file.getSize();
 			String filePath = storePathString + File.separator + newName;
 			file.transferTo(new File(EgovWebUtil.filePathBlackList(filePath)));
@@ -191,7 +190,7 @@ public class EgovFileMngUtil {
 
 			// 2022.11.11 시큐어코딩 처리
 			String fileExt = FilenameUtils.getExtension(orginFileName).toUpperCase();
-			String newName = keyStr + getTimeStamp() + fileKey;
+			String newName = storedFileName(keyStr, fileKey);
 			long size = file.getSize();
 			String filePath = storePathString + File.separator + newName;
 			file.transferTo(new File(EgovWebUtil.filePathBlackList(filePath)));
@@ -289,14 +288,35 @@ public class EgovFileMngUtil {
 	 * 표준프레임워크 파일 다운로드 가이드가 안내하는 request attribute("orginFile")에서 원본 파일명을 읽어
 	 * Content-Disposition 응답 헤더값을 구성한다.
 	 *
+	 * <p>실행환경 {@link EgovContentDispositions} 에 위임한다 — 한글 파일명은 RFC 5987 {@code filename*=UTF-8''} 로
+	 * 인코딩하고 구형 에이전트용 ASCII 폴백을 병기하며, CR/LF 등 제어문자는 걷어내 헤더 인젝션을 차단한다.
+	 * 종전 구현은 원본 파일명을 그대로 실어 한글이 깨졌고 CR/LF 만 지웠다.</p>
+	 *
 	 * @param request
 	 * @return
-	 * @throws UnsupportedEncodingException
 	 */
-	static String buildContentDispositionHeader(HttpServletRequest request) throws UnsupportedEncodingException {
-		String orgFileName = resolveRequestAttribute(request, "orginFile").replaceAll("\r", "").replaceAll("\n", "");
+	static String buildContentDispositionHeader(HttpServletRequest request) {
+		return contentDispositionOf(resolveRequestAttribute(request, "orginFile"));
+	}
 
-		return "attachment; filename=" + new String(orgFileName.getBytes(), "UTF-8");
+	/**
+	 * 원본 파일명으로 attachment 용 Content-Disposition 헤더값을 만든다.
+	 *
+	 * <p>원본 파일명이 비어 있거나 정리 후 남는 문자가 없으면 파일명 파라미터 없이 {@code attachment} 만 돌려준다
+	 * (브라우저가 URL 의 마지막 경로를 파일명으로 쓴다). 종전에는 {@code attachment; filename=} 처럼 값이 빈 헤더가 나갔다.</p>
+	 *
+	 * @param originalFileName 원본 파일명(신뢰할 수 없는 값 허용)
+	 * @return 헤더값
+	 */
+	static String contentDispositionOf(String originalFileName) {
+		if (originalFileName == null || originalFileName.trim().isEmpty()) {
+			return "attachment";
+		}
+		try {
+			return EgovContentDispositions.attachment(originalFileName);
+		} catch (IllegalArgumentException e) {
+			return "attachment";
+		}
 	}
 
 	/**
@@ -318,8 +338,8 @@ public class EgovFileMngUtil {
 			fileExt = FilenameUtils.getExtension(orginFileName);
 		}
 
-		// 2012.11 KISA 보안조치
-		newName = getTimeStamp();
+		// 2012.11 KISA 보안조치 — 저장명은 원본과 무관한 무작위 값(실행환경 EgovStoredFileNames, UUID 32자)
+		newName = EgovStoredFileNames.generateWithoutExtension();
 		writeFile(file, newName);
 		map.put(Globals.ORIGIN_FILE_NM, orginFileName);
 		map.put(Globals.UPLOAD_FILE_NM, newName);
@@ -389,7 +409,7 @@ public class EgovFileMngUtil {
 
 				// response.setBufferSize(fSize);
 				response.setContentType(mimetype);
-				response.setHeader("Content-Disposition", "attachment; filename=" + orgFileName);
+				response.setHeader("Content-Disposition", contentDispositionOf(orgFileName));
 				response.setContentLengthLong(fSize);
 				// response.setHeader("Content-Transfer-Encoding","binary");
 				// response.setHeader("Pragma","no-cache");
@@ -447,25 +467,18 @@ public class EgovFileMngUtil {
 	}
 
 	/**
-	 * 공통 컴포넌트 utl.fcc 패키지와 Dependency 제거를 위해 내부 메서드로 추가 정의함 응용어플리케이션에서 고유값을 사용하기 위해
-	 * 시스템에서 17자리의 TIMESTAMP값을 구하는 기능
+	 * 첨부파일의 저장 파일명을 만든다 — {@code keyStr + UUID 32자 + fileKey}.
 	 *
-	 * @param
-	 * @return Timestamp 값
-	 * @see
+	 * <p>종전에는 17자리 시각 문자열({@code yyyyMMddhhmmssSSS})을 썼다. 12시간제 {@code hh} 라 오전·오후가 같은
+	 * 이름을 만들고, 같은 밀리초에 올라온 파일이 조용히 덮어써졌으며, 시각을 알면 다음 이름을 추측할 수 있었다.
+	 * 실행환경 {@link EgovStoredFileNames} 의 UUID 저장명으로 바꿔 세 문제를 없앤다. 확장자는 종전처럼 붙이지 않는다
+	 * (FileVO 의 fileExtsn 에 따로 보관). 길이는 접두·순번을 합쳐 40자 안팎으로 STRE_FILE_NM(255) 안에 든다.</p>
+	 *
+	 * @param keyStr 저장명 접두(예: "FILE_")
+	 * @param fileKey 파일 순번
+	 * @return 저장 파일명
 	 */
-	private static String getTimeStamp() {
-
-		String rtnStr = null;
-
-		// 문자열로 변환하기 위한 패턴 설정(연도-월-일 시:분:초:초(자정이후 초))
-		String pattern = "yyyyMMddhhmmssSSS";
-
-		SimpleDateFormat sdfCurrent = new SimpleDateFormat(pattern, Locale.KOREA);
-		Timestamp ts = new Timestamp(System.currentTimeMillis());
-
-		rtnStr = sdfCurrent.format(ts.getTime());
-
-		return rtnStr;
+	static String storedFileName(String keyStr, int fileKey) {
+		return keyStr + EgovStoredFileNames.generateWithoutExtension() + fileKey;
 	}
 }

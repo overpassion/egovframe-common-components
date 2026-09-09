@@ -14,6 +14,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.egovframe.rte.fdl.crypto.EgovEnvCryptoService;
+import org.egovframe.rte.fdl.filehandling.EgovContentDispositions;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -133,11 +134,15 @@ public class EgovFileDownloadController {
 					mimetype = "application/x-stuff";
 				}
 
-				String contentDisposition = EgovBrowserUtil.getDisposition(fvo.getOrignlFileNm(), userAgent, "UTF-8");
+				// 실행환경 EgovContentDispositions(RFC 6266) 에 위임 — 브라우저 종류로 헤더 형식을 가르던 종전 방식은
+				// 판별되지 않는 브라우저에서 다운로드를 막았다. 원본명이 비어 있으면 저장 파일명을 쓴다.
+				String originalName = fvo.getOrignlFileNm();
+				if (originalName == null || originalName.trim().isEmpty()) {
+					originalName = fvo.getStreFileNm();
+				}
+				String contentDisposition = EgovContentDispositions.attachment(originalName);
 				// response.setBufferSize(fSize); // OutOfMemeory 발생
 				response.setContentType(mimetype);
-				// response.setHeader("Content-Disposition", "attachment; filename=\"" +
-				// contentDisposition + "\"");
 				response.setHeader("Content-Disposition", contentDisposition);
 				response.setContentLengthLong(fSize);
 

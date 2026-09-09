@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.egovframe.rte.fdl.filehandling.EgovContentDispositions;
 import org.springframework.util.FileCopyUtils;
 
 import egovframework.com.cmm.EgovWebUtil;
@@ -40,6 +41,7 @@ import jakarta.servlet.http.HttpServletResponse;
  *   2025.09.01  이백행          2025년 컨트리뷰션 PMD로 소프트웨어 보안약점 진단하고 제거하기-CloseResource(부적절한 자원 해제)
  *   2025.09.01  이백행          2025년 컨트리뷰션 PMD로 소프트웨어 보안약점 진단하고 제거하기-AssignmentInOperand(피연산자내에 할당문이 사용됨. 해당 코드를 복잡하고 가독성이 떨어지게 만듬)
  *   2025.09.01  이백행          2025년 컨트리뷰션 PMD로 소프트웨어 보안약점 진단하고 제거하기-AvoidReassigningParameters(넘겨받는 메소드 parameter 값을 직접 변경하는 코드 탐지)
+ *   2026.09.10  실행환경팀        downFile·viewFile 의 Content-Disposition 헤더를 실행환경 EgovContentDispositions(RFC 6266)로 이전
  *
  *      </pre>
  */
@@ -197,9 +199,11 @@ public class EgovFormBasedFileUtil {
 			throw new FileNotFoundException(downFileName);
 		}
 
-		String original2 = original.replaceAll("\r", "").replaceAll("\n", "");
 		response.setContentType("application/octet-stream");
-		response.setHeader("Content-Disposition", "attachment; filename=\"" + convert(original2) + "\";");
+		// 실행환경 EgovContentDispositions 에 위임 — 한글 파일명은 RFC 5987 로 인코딩하고 ASCII 폴백을 병기하며,
+		// CR/LF 등 제어문자는 걷어내 헤더 인젝션을 차단한다. 원본명이 비어 있으면 저장 파일명을 쓴다.
+		String downloadName = (original == null || original.trim().isEmpty()) ? file.getName() : original;
+		response.setHeader("Content-Disposition", EgovContentDispositions.attachment(downloadName));
 		response.setHeader("Content-Transfer-Encoding", "binary");
 		response.setHeader("Pragma", "no-cache");
 		response.setHeader("Expires", "0");
@@ -261,7 +265,8 @@ public class EgovFormBasedFileUtil {
 			response.setContentType("application/octet-stream;");
 		}
 
-		response.setHeader("Content-Disposition", "filename=image;");
+		// 종전 "filename=image;" 는 disposition 형식이 없는 잘못된 값이었다 — 브라우저 내 표시용 inline 으로 바로잡는다.
+		response.setHeader("Content-Disposition", EgovContentDispositions.inline("image"));
 		// 2026.02.28 KISA 취약점 조취
 		try (FileInputStream fis = new FileInputStream(file)) {
 			FileCopyUtils.copy(fis, response.getOutputStream());

@@ -1,11 +1,14 @@
 package egovframework.com.cmm.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.egovframe.rte.fdl.filehandling.EgovContentDispositions;
 import org.junit.jupiter.api.Test;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,7 +30,17 @@ class EgovFileMngUtilDownFileTest {
 
 		String header = EgovFileMngUtil.buildContentDispositionHeader(request);
 
-		assertEquals("attachment; filename=원본파일.txt", header);
+		// 실행환경 EgovContentDispositions 형식: 한글은 RFC 5987 filename* 로 인코딩하고 ASCII 폴백을 병기한다
+		assertEquals(EgovContentDispositions.attachment("원본파일.txt"), header);
+		assertTrue(header.startsWith("attachment; filename=\""), header);
+		assertTrue(header.contains("filename*=UTF-8''%EC%9B%90%EB%B3%B8%ED%8C%8C%EC%9D%BC.txt"), header);
+	}
+
+	@Test
+	void buildContentDispositionHeader_asciiFileName_keepsLegacyShape() throws Exception {
+		HttpServletRequest request = stubRequest("orginFile", "report.pdf");
+
+		assertEquals("attachment; filename=\"report.pdf\"", EgovFileMngUtil.buildContentDispositionHeader(request));
 	}
 
 	@Test
@@ -36,16 +49,30 @@ class EgovFileMngUtilDownFileTest {
 
 		String header = EgovFileMngUtil.buildContentDispositionHeader(request);
 
-		assertEquals("attachment; filename=원본파일.txt", header);
+		assertEquals(EgovContentDispositions.attachment("원본파일.txt"), header);
+		assertFalse(header.contains("\r") || header.contains("\n"), "헤더 인젝션 문자가 남으면 안 된다");
 	}
 
 	@Test
-	void buildContentDispositionHeader_emptyFileName_whenAttributeMissing() throws Exception {
+	void buildContentDispositionHeader_pathIsReducedToFileName() throws Exception {
+		HttpServletRequest request = stubRequest("orginFile", "..\\..\\etc\\passwd.txt");
+
+		assertEquals("attachment; filename=\"passwd.txt\"", EgovFileMngUtil.buildContentDispositionHeader(request));
+	}
+
+	@Test
+	void buildContentDispositionHeader_attachmentOnly_whenAttributeMissing() throws Exception {
 		HttpServletRequest request = stubRequest();
 
-		String header = EgovFileMngUtil.buildContentDispositionHeader(request);
+		// 종전 "attachment; filename=" 처럼 값이 빈 파라미터를 내지 않는다
+		assertEquals("attachment", EgovFileMngUtil.buildContentDispositionHeader(request));
+	}
 
-		assertEquals("attachment; filename=", header);
+	@Test
+	void contentDispositionOf_attachmentOnly_whenNothingUsableRemains() {
+		assertEquals("attachment", EgovFileMngUtil.contentDispositionOf("\r\n"));
+		assertEquals("attachment", EgovFileMngUtil.contentDispositionOf("   "));
+		assertEquals("attachment", EgovFileMngUtil.contentDispositionOf(null));
 	}
 
 	@Test

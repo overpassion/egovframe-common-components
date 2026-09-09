@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import org.egovframe.rte.fdl.filehandling.EgovContentDispositions;
+
 import egovframework.com.cmm.EgovWebUtil;
 import egovframework.com.cmm.LoginVO;
 import egovframework.com.cmm.service.EgovProperties;
@@ -205,8 +207,8 @@ public class EgovSndngMailDetailController {
 			String mimetype = "application/x-msdownload;charset=UTF-8";
 
 			response.setContentType(mimetype);
-			response.setHeader("Content-Disposition",
-					"attachment; filename=\"" + EgovWebUtil.removeCRLF(uFile.getName()) + "\"");
+			// 실행환경 EgovContentDispositions 에 위임 — 제어문자 제거(헤더 인젝션 차단)까지 맡기므로 removeCRLF 가 필요 없다
+			response.setHeader("Content-Disposition", EgovContentDispositions.attachment(uFile.getName()));
 			response.setContentLength(fSize);
 
 			BufferedInputStream in = null;
