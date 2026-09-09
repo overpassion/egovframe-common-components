@@ -16,11 +16,14 @@
 
 	<context:annotation-config/>
 	
-	<!-- 국제화 Message 설정 -->
-	<bean id="messageSource" class="egovframework.com.cmm.util.EgovWildcardReloadableResourceBundleMessageSource">
-		<property name="egovBasenames">
+	<!-- 국제화 Message 설정 — 실행환경 EgovWildcardMessageSource(basename 와일드카드).
+	     공통컴포넌트 사본 EgovWildcardReloadableResourceBundleMessageSource(egovBasenames)를 대체한다.
+	     프로퍼티명은 Spring 표준 basenames 이고, 패턴은 .properties 까지 적어 메시지 파일만 잡는다.
+	     패턴이 아닌 basename 은 그대로 전달되므로 실행환경 모듈 메시지·globals 는 종전과 같다. -->
+	<bean id="messageSource" class="org.egovframe.rte.fdl.cmmn.message.EgovWildcardMessageSource">
+		<property name="basenames">
 			<list>
-				<value>classpath*:egovframework/message/com/**/*</value>
+				<value>classpath*:egovframework/message/com/**/*.properties</value>
 				<value>classpath:/org/egovframe/rte/fdl/idgnr/messages/idgnr</value>
 				<value>classpath:/org/egovframe/rte/fdl/property/messages/properties</value>
 				<value>classpath:/egovframework/egovProps/globals</value>
