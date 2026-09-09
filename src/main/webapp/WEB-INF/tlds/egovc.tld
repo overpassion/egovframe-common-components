@@ -517,9 +517,9 @@
 	</function>
 
 	<function>
-		<description>CKEditor 등 리치텍스트로 등록한 HTML(이미지 포함)을 조회화면에 출력하기 전에 XSS 방지 처리(허용된 태그/속성만 남김)를 수행한다.</description>
+		<description>CKEditor 등 리치텍스트로 등록한 HTML(이미지 포함)을 조회화면에 출력하기 전에 XSS 방지 처리(허용된 태그/속성만 남김)를 수행한다. 정제는 실행환경 ptl.mvc 의 EgovHtmlSanitizer(jsoup Safelist 화이트리스트, 기본 정책은 종전 공통컴포넌트 사본과 동일)가 담당한다.</description>
 		<name>sanitizeHtml</name>
-		<function-class>egovframework.com.cmm.EgovHtmlSanitizer</function-class>
+		<function-class>org.egovframe.rte.ptl.mvc.filter.EgovHtmlSanitizer</function-class>
 		<function-signature>java.lang.String sanitize(java.lang.String)</function-signature>
 		<example>
 			${egovc:sanitizeHtml(resultList[0].schdulCn)}
