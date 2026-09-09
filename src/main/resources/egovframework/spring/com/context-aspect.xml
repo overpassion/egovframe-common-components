@@ -58,8 +58,11 @@
 		</property>
 	</bean>
 
-	<bean id="egovHandler" class="egovframework.com.cmm.EgovComExcepHndlr" />
-	<bean id="otherHandler" class="egovframework.com.cmm.EgovComOthersExcepHndlr" />
+	<!-- 예외 로깅 핸들러: 공통컴포넌트 사본(EgovComExcepHndlr·EgovComOthersExcepHndlr — 실질 동작은 LOGGER.error 한 줄)을
+	     실행환경 EgovLoggingExceptionHandler 로 교체한다. 로거 이름이 핸들러 클래스 고정에서 예외 발생 위치(packageName)로
+	     바뀌므로 업무 패키지 단위로 로그 레벨을 제어할 수 있다. 레벨을 낮추려면 <property name="logLevel" value="WARN"/>. -->
+	<bean id="egovHandler" class="org.egovframe.rte.fdl.cmmn.exception.handler.EgovLoggingExceptionHandler" />
+	<bean id="otherHandler" class="org.egovframe.rte.fdl.cmmn.exception.handler.EgovLoggingExceptionHandler" />
 	<bean id="egov.adminAuthorizationAspect" class="egovframework.com.cmm.util.EgovAdminAuthorizationAspect" />
 
 </beans>
