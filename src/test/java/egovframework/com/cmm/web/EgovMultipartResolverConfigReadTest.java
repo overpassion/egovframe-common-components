@@ -34,7 +34,7 @@ class EgovMultipartResolverConfigReadTest {
 
 	@Test
 	void maxFileSizeIsReadOncePerRequestNotOncePerFile() throws Exception {
-		Path config = Paths.get(EgovProperties.GLOBALS_PROPERTIES_FILE);
+		Path config = globalsPath();
 		byte[] original = Files.readAllBytes(config);
 		try {
 			Files.write(config, BASE_CONFIG.getBytes(StandardCharsets.UTF_8));
@@ -61,7 +61,7 @@ class EgovMultipartResolverConfigReadTest {
 
 	@Test
 	void fileLargerThanMaxSizeIsStillRejected() throws Exception {
-		Path config = Paths.get(EgovProperties.GLOBALS_PROPERTIES_FILE);
+		Path config = globalsPath();
 		byte[] original = Files.readAllBytes(config);
 		try {
 			Files.write(config, BASE_CONFIG.replace("104857600", "99").getBytes(StandardCharsets.UTF_8));
@@ -72,6 +72,19 @@ class EgovMultipartResolverConfigReadTest {
 		} finally {
 			Files.write(config, original);
 		}
+	}
+
+	/**
+	 * {@link EgovProperties#GLOBALS_PROPERTIES_FILE} 은 클래스패스 URL 의 path 로 만든 문자열이라 Windows 에서는
+	 * {@code /C:/.../egovProps\globals.properties} 형태다. {@code Paths.get} 은 이 형태를 받지 못해
+	 * ({@code Illegal char <:>}) 종전에는 Windows 에서 이 테스트가 실행 자체가 안 됐다. 앞의 슬래시를 떼어 경로로 만든다.
+	 */
+	private static Path globalsPath() {
+		String location = EgovProperties.GLOBALS_PROPERTIES_FILE.replace('\\', '/');
+		if (location.matches("^/[A-Za-z]:/.*")) {
+			location = location.substring(1);
+		}
+		return Paths.get(location);
 	}
 
 	private static void validateUploadedFiles(MultipartHttpServletRequest request) throws Exception {

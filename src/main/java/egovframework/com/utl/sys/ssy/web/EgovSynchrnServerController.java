@@ -387,8 +387,9 @@ public class EgovSynchrnServerController {
 	 *
 	 * <p>종전에는 확장자 검사({@code checkFileExtension})와 크기 검사({@code checkFileMaxSize})가
 	 * 따로였다. 실행환경 {@link EgovUploadPolicy} 로 합치면 파일명 없음·빈 파일·확장자 없음까지
-	 * 함께 판정된다. 화이트리스트가 비어 있으면 아무 확장자도 허용하지 않는다 —
-	 * 종전 {@code isAllowedExtension} 이 빈 목록에서 {@code false} 를 돌려주던 것과 같다.</p>
+	 * 함께 판정된다. 화이트리스트가 비어 있으면 {@code build()} 가 {@link IllegalStateException} 을 던져
+	 * 설정 시점에 실패한다(fail-closed) — 종전 {@code isAllowedExtension} 이 빈 목록에서 조용히 {@code false} 를
+	 * 돌려주던 것과 달리, 빈 허용 목록이 운영 중에 모든 업로드를 거부하는 상태로 남지 않는다.</p>
 	 *
 	 * @return 업로드 정책
 	 */

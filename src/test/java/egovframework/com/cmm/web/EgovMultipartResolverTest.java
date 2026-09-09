@@ -28,7 +28,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
  * <p><b>경로가 섞인 파일명이 통과하는 것은 정상이다.</b> {@code EgovMultipartFiles.fileNameOf} 가
  * 경로를 떼고 이름만 판정하기 때문이다({@code ../../evil.png} → {@code evil.png}).
  * 저장 측인 {@code EgovFileMngUtil} 은 원본 이름을 경로에 쓰지 않고
- * {@code keyStr + 타임스탬프 + 일련번호} 로 새 이름을 만들므로 경로 이탈로 이어지지 않는다.</p>
+ * {@code keyStr + UUID + 일련번호}(실행환경 {@code EgovStoredFileNames})로 새 이름을 만들므로 경로 이탈로 이어지지 않는다.</p>
  *
  * <pre>
  *  == 개정이력(Modification Information) ==
@@ -36,6 +36,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
  *   수정일      수정자           수정내용
  *  -------    --------    ---------------------------
  *   2026.09.04  실행환경팀        최초 생성 (EgovUploadPolicy 이전 검증)
+ *   2026.09.10  실행환경팀        실행환경 PR 판(보안 재검증 반영)에 맞춤 — ::$DATA 는 INVALID_FILENAME 으로 거부
  * </pre>
  */
 class EgovMultipartResolverTest {
@@ -128,7 +129,9 @@ class EgovMultipartResolverTest {
 	void 끝문자_우회_불가() {
 		assertTrue(rejectionOf("evil.jsp.").contains("EXTENSION_NOT_ALLOWED"));
 		assertTrue(rejectionOf("evil.jsp ").contains("EXTENSION_NOT_ALLOWED"));
-		assertTrue(rejectionOf("evil.jsp::$DATA").contains("EXTENSION_NOT_ALLOWED"));
+		// 대체 데이터 스트림 표기(::$DATA)는 실행환경 EgovUploadPolicy 가 ':' 자체를 INVALID_FILENAME 으로 거부한다
+		// (2026.09.07 보안 재검증 — Windows 드라이브 접두·ADS 표기의 원천 차단). 확장자 판정까지 가지 않는다.
+		assertTrue(rejectionOf("evil.jsp::$DATA").contains("INVALID_FILENAME"));
 		assertTrue(rejectionOf("evil.jsp..").contains("NO_EXTENSION"));
 	}
 

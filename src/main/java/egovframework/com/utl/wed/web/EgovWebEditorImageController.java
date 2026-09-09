@@ -74,8 +74,9 @@ public class EgovWebEditorImageController {
 	 * 업로드·조회 공통 정책.
 	 *
 	 * <p>확장자 화이트리스트는 {@code Globals.fileUpload.Extensions} 를 따른다.
-	 * 값이 비어 있으면 허용 목록이 비어 아무 확장자도 통과하지 않는다 —
-	 * 종전 {@code isAllowedExtension} 이 빈 목록에서 {@code false} 를 돌려주던 것과 같다.</p>
+	 * 값이 비어 있으면 {@code build()} 가 {@link IllegalStateException} 을 던져 이 컨트롤러의 생성(기동) 시점에
+	 * 실패한다(fail-closed) — 종전 {@code isAllowedExtension} 이 빈 목록에서 조용히 {@code false} 를 돌려주던
+	 * 것과 달리, 빈 허용 목록이 운영 중에 모든 업로드를 거부하는 상태로 남지 않는다.</p>
 	 */
 	private final EgovUploadPolicy uploadPolicy = EgovUploadPolicy.builder()
 			.allowExtensionList(extWhiteList)
